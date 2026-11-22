@@ -1,0 +1,692 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes shimmer-gold {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.gold-shimmer-text {
+  background: linear-gradient(90deg, #A87519 0%, #F0C45B 30%, #D9A52E 50%, #F0C45B 70%, #A87519 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-gold 3s linear infinite;
+}
+
+:root {
+  --primary-navy: #061426;
+  --deep-navy: #091B31;
+  --secondary-navy: #102846;
+  --primary-gold: #D9A52E;
+  --highlight-gold: #F0C45B;
+  --deep-gold: #A87519;
+  --ivory: #FFF9ED;
+  --white: #FFFFFF;
+  --light-cream: #F8F4EA;
+  --body-text: #263347;
+  --secondary-text: #687386;
+  --borders: #E3D8BE;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F8F4EA;
+}
+::-webkit-scrollbar-thumb {
+  background: #D9A52E;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A87519;
+}
+
+/* Interactive Button & Link Feedback */
+/* Brand logo link - eliminate any focus/active outline/ring box */
+.brand-logo-link,
+.brand-logo-link:focus,
+.brand-logo-link:focus-visible,
+.brand-logo-link:active,
+.brand-logo-link:hover,
+.brand-logo-link * {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.btn-sims-primary {
+  background-color: #D9A52E;
+  color: #061426;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 6px -1px rgba(217, 165, 46, 0.2), 0 2px 4px -2px rgba(217, 165, 46, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-sims-primary:hover {
+  background-color: #F0C45B;
+  box-shadow: 0 10px 15px -3px rgba(217, 165, 46, 0.35), 0 4px 6px -4px rgba(217, 165, 46, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-sims-primary:active {
+  transform: scale(0.97) translateY(0);
+  background-color: #A87519;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+}
+
+.btn-sims-primary:focus-visible {
+  outline: 2px solid #D9A52E;
+  outline-offset: 2px;
+}
+
+.btn-sims-secondary {
+  background-color: #102846;
+  color: #FFF9ED;
+  font-weight: 500;
+  border: 1px solid rgba(217, 165, 46, 0.4);
+  border-radius: 0.5rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-sims-secondary:hover {
+  background-color: #091B31;
+  border-color: #D9A52E;
+  color: #F0C45B;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px -2px rgba(6, 20, 38, 0.3);
+}
+
+.btn-sims-secondary:active {
+  transform: scale(0.97) translateY(0);
+  background-color: #061426;
+}
+
+.btn-sims-secondary:focus-visible {
+  outline: 2px solid #D9A52E;
+  outline-offset: 2px;
+}
+
+/* Global button and clickable interactive feedback */
+button:not(:disabled),
+a[role="button"]:not([aria-disabled="true"]),
+.interactive-tap {
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled):active,
+a[role="button"]:not([aria-disabled="true"]):active,
+.interactive-tap:active {
+  transform: scale(0.97);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Card System */
+.sims-card {
+  background-color: #FFFFFF;
+  border-radius: 1rem;
+  border: 1px solid #E3D8BE;
+  box-shadow: 0 1px 3px 0 rgba(6, 20, 38, 0.05), 0 1px 2px -1px rgba(6, 20, 38, 0.05);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.sims-card-interactive {
+  cursor: pointer;
+}
+
+.sims-card-interactive:hover {
+  border-color: #D9A52E;
+  box-shadow: 0 8px 20px -4px rgba(6, 20, 38, 0.08), 0 4px 6px -2px rgba(6, 20, 38, 0.04);
+  transform: translateY(-2px);
+}
+
+.sims-card-interactive:active {
+  transform: scale(0.99) translateY(0);
+  box-shadow: 0 2px 4px 0 rgba(6, 20, 38, 0.06);
+}
+
+.sims-card-interactive:focus-visible {
+  outline: 2px solid #D9A52E;
+  outline-offset: 3px;
+}
+
+.sims-card-selected {
+  border-color: #D9A52E !important;
+  box-shadow: 0 0 0 2px rgba(217, 165, 46, 0.3), 0 8px 24px -4px rgba(6, 20, 38, 0.1) !important;
+  background-color: #FFFDF9 !important;
+}
+
+/* Flip Card System */
+.faculty-flip-wrapper {
+  perspective: 1200px;
+  cursor: pointer;
+}
+.faculty-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+}
+.faculty-flip-wrapper.flipped .faculty-flip-inner {
+  transform: rotateY(180deg);
+}
+.faculty-flip-front,
+.faculty-flip-back {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+.faculty-flip-back {
+  transform: rotateY(180deg);
+}
+/* Neutralise sims-card-interactive hover translateY on flip wrapper */
+.faculty-flip-wrapper .sims-card-interactive:hover {
+  transform: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faculty-flip-inner {
+    transition: opacity 0.2s ease !important;
+    transform: none !important;
+  }
+  .faculty-flip-wrapper.flipped .faculty-flip-front {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .faculty-flip-wrapper.flipped .faculty-flip-back {
+    transform: none !important;
+    opacity: 1;
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   DARK THEME SYSTEM - REFINED MULTI-TIER PALETTE (SIMS RAIPUR)
+   Main background: #101113
+   Secondary section background: #181A1D
+   Standard card background: #22252A
+   Elevated card background: #2C3036
+   Borders and dividers: #383D44
+   Primary gold: #D5AD5B
+   Primary text: #F1EEE7
+   Secondary text: #B8B6B0
+   Muted text: #85878B
+   ========================================================================== */
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] {
+  --color-page: #101113;
+  --color-surface: #181A1D;
+  --color-card: #22252A;
+  --color-raised: #2C3036;
+  --color-border: #383D44;
+  --color-hover: #282C32;
+  --color-text: #F1EEE7;
+  --color-text-secondary: #B8B6B0;
+  --color-muted: #85878B;
+  --color-disabled: #5A5D64;
+  --color-accent: #D5AD5B;
+  --color-accent-hover: #E4C27A;
+  --color-accent-wash: rgba(213, 173, 91, 0.12);
+}
+
+/* Short 150ms colour transition */
+[data-theme="dark"],
+[data-theme="dark"] * {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="dark"],
+  [data-theme="dark"] * {
+    transition: none !important;
+  }
+}
+
+/* Tier 0: Base Body, Root & Main Viewport Canvas */
+[data-theme="dark"] body,
+[data-theme="dark"] #root {
+  background-color: #101113 !important;
+  color: #F1EEE7 !important;
+}
+
+[data-theme="dark"] .bg-\[\#FFF9ED\] {
+  background-color: #101113 !important;
+  color: #F1EEE7 !important;
+}
+
+/* Logo and media brightness damping */
+[data-theme="dark"] img,
+[data-theme="dark"] video {
+  filter: brightness(0.95);
+}
+
+/* Scrollbar in dark mode */
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: #101113;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #2C3036;
+  border-radius: 4px;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #383D44;
+}
+
+/* Tier 1: Header, Footer & Micro-bars (#141619 / #181A1D) */
+[data-theme="dark"] header,
+[data-theme="dark"] footer {
+  background-color: #141619 !important;
+  border-color: #383D44 !important;
+}
+
+[data-theme="dark"] header .bg-\[\#091B31\],
+[data-theme="dark"] .bg-\[\#061426\],
+[data-theme="dark"] .bg-\[\#091B31\] {
+  background-color: #141619 !important;
+  border-color: #383D44 !important;
+}
+
+/* Tier 1: Homepage & Course Hero Sections (Zero Navy / Zero Blue Gradient) */
+[data-theme="dark"] section.bg-gradient-to-b.from-\[\#061426\],
+[data-theme="dark"] .bg-gradient-to-b.from-\[\#061426\] {
+  background-image: linear-gradient(180deg, #101113 0%, #141619 50%, #181A1D 100%) !important;
+  background-color: #101113 !important;
+  border-color: #383D44 !important;
+}
+
+/* Eliminate blue glow orbs in hero */
+[data-theme="dark"] .bg-\[\#102846\]\/40 {
+  display: none !important;
+}
+
+[data-theme="dark"] .bg-\[\#D9A52E\]\/10 {
+  background-color: rgba(213, 173, 91, 0.05) !important;
+}
+
+/* Hero Exam Board: Shell #181A1D, plates #22252A */
+[data-theme="dark"] .bg-\[\#091B31\]\/95 {
+  background-color: #181A1D !important;
+  border-color: #383D44 !important;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.7) !important;
+}
+
+[data-theme="dark"] .bg-\[\#0F243D\] {
+  background-color: #22252A !important;
+  border-color: #383D44 !important;
+  color: #F1EEE7 !important;
+}
+
+[data-theme="dark"] .bg-\[\#0F243D\]:hover,
+[data-theme="dark"] a.bg-\[\#0F243D\]:hover {
+  background-color: #282C32 !important;
+  border-color: #D5AD5B !important;
+  color: #F1EEE7 !important;
+}
+
+/* Tier 1: Secondary Section Backgrounds, Alternating Banners, Sidebars (#181A1D) */
+[data-theme="dark"] .bg-\[\#F8F4EA\],
+[data-theme="dark"] .bg-slate-50,
+[data-theme="dark"] .bg-gray-50,
+[data-theme="dark"] aside,
+[data-theme="dark"] .bg-\[\#0F243D\],
+[data-theme="dark"] .bg-\[\#102846\] {
+  background-color: #181A1D !important;
+  border-color: #383D44 !important;
+  color: #F1EEE7 !important;
+}
+
+/* Tier 2: Standard Card Backgrounds (#22252A) */
+[data-theme="dark"] .sims-card,
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .bg-\[\#FFFDF9\],
+[data-theme="dark"] .bg-slate-100,
+[data-theme="dark"] .bg-gray-100 {
+  background-color: #22252A !important;
+  border-color: #383D44 !important;
+  color: #F1EEE7 !important;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.4), 0 1px 3px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Interactive Card Hover & Selected States */
+[data-theme="dark"] .sims-card-interactive:hover {
+  border-color: #D5AD5B !important;
+  background-color: #282C32 !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(213, 173, 91, 0.25) !important;
+}
+
+[data-theme="dark"] .sims-card-selected {
+  background-color: #2C3036 !important;
+  border-color: #D5AD5B !important;
+  box-shadow: 0 0 0 2px rgba(213, 173, 91, 0.35), 0 8px 24px -4px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Tier 3: Elevated Containers, Modals, Dropdowns & Drawers (#2C3036) */
+[data-theme="dark"] [role="dialog"],
+[data-theme="dark"] .bg-white\/90,
+[data-theme="dark"] .bg-white\/95,
+[data-theme="dark"] .backdrop-blur-md,
+[data-theme="dark"] nav div.absolute,
+[data-theme="dark"] .dropdown-menu,
+[data-theme="dark"] .shadow-2xl,
+[data-theme="dark"] .shadow-xl {
+  background-color: #2C3036 !important;
+  border-color: #383D44 !important;
+  color: #F1EEE7 !important;
+}
+
+/* Tier 4: Form Inputs, Textareas, Selects (#181A1D inset) */
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: #181A1D !important;
+  border-color: #383D44 !important;
+  color: #F1EEE7 !important;
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+  border-color: #D5AD5B !important;
+  outline: 2px solid rgba(213, 173, 91, 0.3) !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: #85878B !important;
+}
+
+/* Tier 5: Borders, Dividers & Rules (#383D44) */
+[data-theme="dark"] .border-\[\#E3D8BE\],
+[data-theme="dark"] .border-\[\#EADFC7\],
+[data-theme="dark"] .border-slate-200,
+[data-theme="dark"] .border-gray-200,
+[data-theme="dark"] .border-slate-300,
+[data-theme="dark"] .border-white\/10,
+[data-theme="dark"] .border-white\/20,
+[data-theme="dark"] .border-\[\#D9A52E\]\/20,
+[data-theme="dark"] .border-\[\#D9A52E\]\/30,
+[data-theme="dark"] .divide-y > *,
+[data-theme="dark"] .divide-x > * {
+  border-color: #383D44 !important;
+}
+
+/* Tier 6: Typography Hierarchy */
+/* Primary Text: Headings and titles */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+[data-theme="dark"] .text-\[\#061426\],
+[data-theme="dark"] .text-slate-900,
+[data-theme="dark"] .text-gray-900 {
+  color: #F1EEE7 !important;
+}
+
+/* Secondary Text: Paragraphs & body descriptions */
+[data-theme="dark"] p,
+[data-theme="dark"] .text-\[\#263347\],
+[data-theme="dark"] .text-slate-800,
+[data-theme="dark"] .text-gray-800,
+[data-theme="dark"] .text-slate-700,
+[data-theme="dark"] .text-gray-700 {
+  color: #B8B6B0 !important;
+}
+
+/* Muted Text: Labels, metadata, captions, timestamps */
+[data-theme="dark"] .text-\[\#687386\],
+[data-theme="dark"] .text-\[\#E3D8BE\],
+[data-theme="dark"] .text-slate-600,
+[data-theme="dark"] .text-gray-600,
+[data-theme="dark"] .text-slate-500,
+[data-theme="dark"] .text-gray-500,
+[data-theme="dark"] .text-\[\#98A2B3\],
+[data-theme="dark"] .text-\[\#A0A8B5\] {
+  color: #85878B !important;
+}
+
+/* Champagne Gold Accents */
+[data-theme="dark"] .text-\[\#D9A52E\],
+[data-theme="dark"] .text-\[\#F0C45B\],
+[data-theme="dark"] .text-\[\#A87519\],
+[data-theme="dark"] .text-\[\#C9A55C\] {
+  color: #D5AD5B !important;
+}
+
+/* Hover Links */
+[data-theme="dark"] a:hover:not(.btn-sims-primary):not(.btn-sims-secondary) {
+  color: #E4C27A !important;
+}
+
+/* Tier 7: Buttons & CTAs */
+[data-theme="dark"] /* Brand logo link - eliminate any focus/active outline/ring box */
+.brand-logo-link,
+.brand-logo-link:focus,
+.brand-logo-link:focus-visible,
+.brand-logo-link:active,
+.brand-logo-link:hover,
+.brand-logo-link * {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.btn-sims-primary {
+  background-color: #D5AD5B !important;
+  color: #101113 !important;
+  box-shadow: 0 2px 8px -1px rgba(213, 173, 91, 0.3) !important;
+}
+
+[data-theme="dark"] .btn-sims-primary:hover {
+  background-color: #E4C27A !important;
+  color: #101113 !important;
+  box-shadow: 0 6px 18px -2px rgba(213, 173, 91, 0.45) !important;
+}
+
+[data-theme="dark"] .btn-sims-primary:active {
+  background-color: #B88F3C !important;
+}
+
+[data-theme="dark"] .btn-sims-secondary {
+  background-color: #22252A !important;
+  color: #F1EEE7 !important;
+  border-color: #383D44 !important;
+}
+
+[data-theme="dark"] .btn-sims-secondary:hover {
+  background-color: #2C3036 !important;
+  color: #E4C27A !important;
+  border-color: #D5AD5B !important;
+}
+
+/* Active Nav Indicator */
+[data-theme="dark"] nav a.text-\[\#D9A52E\],
+[data-theme="dark"] nav a.font-semibold {
+  color: #D5AD5B !important;
+  background-color: rgba(213, 173, 91, 0.12) !important;
+}
+
+/* Tier 8: Tables */
+[data-theme="dark"] table,
+[data-theme="dark"] thead,
+[data-theme="dark"] tbody,
+[data-theme="dark"] tr,
+[data-theme="dark"] th,
+[data-theme="dark"] td {
+  border-color: #383D44 !important;
+}
+
+[data-theme="dark"] thead tr,
+[data-theme="dark"] th {
+  background-color: #181A1D !important;
+  color: #F1EEE7 !important;
+}
+
+[data-theme="dark"] tbody tr {
+  background-color: #22252A !important;
+}
+
+[data-theme="dark"] tbody tr:hover {
+  background-color: #282C32 !important;
+}
+
+/* Distinctive Badges & Category Tags */
+[data-theme="dark"] .bg-\[\#F8F4EA\].text-\[\#A87519\],
+[data-theme="dark"] .bg-\[\#FFF9ED\].text-\[\#A87519\] {
+  background-color: rgba(213, 173, 91, 0.12) !important;
+  border-color: rgba(213, 173, 91, 0.3) !important;
+  color: #D5AD5B !important;
+}
+
+/* Status Colours (Subtle washes with high-contrast text) */
+/* Success Sage */
+[data-theme="dark"] .bg-emerald-50,
+[data-theme="dark"] .bg-green-50,
+[data-theme="dark"] .bg-emerald-100 {
+  background-color: rgba(125, 184, 148, 0.12) !important;
+  border-color: rgba(125, 184, 148, 0.25) !important;
+  color: #8FD1A6 !important;
+}
+[data-theme="dark"] .text-emerald-700,
+[data-theme="dark"] .text-green-700,
+[data-theme="dark"] .text-emerald-800,
+[data-theme="dark"] .text-emerald-600 {
+  color: #8FD1A6 !important;
+}
+
+/* Warning Apricot / Gold */
+[data-theme="dark"] .bg-amber-50,
+[data-theme="dark"] .bg-yellow-50,
+[data-theme="dark"] .bg-amber-100 {
+  background-color: rgba(213, 173, 91, 0.12) !important;
+  border-color: rgba(213, 173, 91, 0.25) !important;
+  color: #E4C27A !important;
+}
+[data-theme="dark"] .text-amber-700,
+[data-theme="dark"] .text-yellow-700,
+[data-theme="dark"] .text-amber-800 {
+  color: #E4C27A !important;
+}
+
+/* Danger Rose */
+[data-theme="dark"] .bg-rose-50,
+[data-theme="dark"] .bg-red-50,
+[data-theme="dark"] .bg-rose-100,
+[data-theme="dark"] .bg-red-100 {
+  background-color: rgba(217, 139, 139, 0.12) !important;
+  border-color: rgba(217, 139, 139, 0.25) !important;
+  color: #E89E9E !important;
+}
+[data-theme="dark"] .text-rose-700,
+[data-theme="dark"] .text-red-700,
+[data-theme="dark"] .text-rose-800,
+[data-theme="dark"] .text-red-800,
+[data-theme="dark"] .text-rose-600 {
+  color: #E89E9E !important;
+}
+
+/* Info Periwinkle */
+[data-theme="dark"] .bg-blue-50,
+[data-theme="dark"] .bg-indigo-50,
+[data-theme="dark"] .bg-sky-50 {
+  background-color: rgba(143, 166, 217, 0.12) !important;
+  border-color: rgba(143, 166, 217, 0.25) !important;
+  color: #A4B8E6 !important;
+}
+[data-theme="dark"] .text-blue-700,
+[data-theme="dark"] .text-indigo-700,
+[data-theme="dark"] .text-sky-700 {
+  color: #A4B8E6 !important;
+}
+
+/* Test CBT Interface Specialization */
+[data-theme="dark"] .bg-emerald-600 {
+  background-color: #8FD1A6 !important;
+  color: #101113 !important;
+  border-color: #8FD1A6 !important;
+}
+[data-theme="dark"] .bg-purple-600,
+[data-theme="dark"] .bg-amber-500 {
+  background-color: #A99BD6 !important;
+  color: #101113 !important;
+  border-color: #A99BD6 !important;
+}
+[data-theme="dark"] .ring-\[\#061426\] {
+  --tw-ring-color: #D5AD5B !important;
+}
+[data-theme="dark"] button.bg-gray-100 {
+  background-color: transparent !important;
+  border-color: #383D44 !important;
+  color: #85878B !important;
+}
+[data-theme="dark"] .border-emerald-500 {
+  border-color: #8FD1A6 !important;
+  background-color: rgba(125, 184, 148, 0.12) !important;
+  color: #F1EEE7 !important;
+}
+[data-theme="dark"] .border-red-400 {
+  border-color: #E89E9E !important;
+  background-color: rgba(217, 139, 139, 0.12) !important;
+  color: #F1EEE7 !important;
+}
+
+/* Math typesetting */
+[data-theme="dark"] .katex,
+[data-theme="dark"] .katex-display,
+[data-theme="dark"] .katex-html {
+  color: inherit !important;
+}
+
+/* WhatsApp floating button subtle border */
+[data-theme="dark"] .fixed .rounded-full.bg-\[\#25D366\] {
+  border: 1px solid #383D44 !important;
+}
+
+

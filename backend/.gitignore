@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+venv/
+env/
+.venv/
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+db_backup_*.sqlite3
+staticfiles/
+media/
+
+# Environment / secrets — NEVER commit real .env
+.env
+.env.local
+.env.production
+.env.staging
+
+# Docker
+.docker/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+*.sqlite3
+.env.*
+!.env.example
+backups/
+*.bak

@@ -1,0 +1,166 @@
+{% extends 'admin/base.html' %}
+{% load i18n static %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-6 w-full">
+
+  <!-- 1. TOP QUICK ACTIONS BANNER -->
+  <div class="bg-white dark:bg-base-900 border border-base-200 dark:border-base-800 rounded-default p-4 sm:p-6 shadow-xs">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-xl sm:text-2xl font-bold text-font-important-light dark:text-font-important-dark flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary-600 dark:text-primary-500">dashboard</span>
+          SIMS Raipur Executive Control Center
+        </h1>
+        <p class="text-xs text-font-subtle-light dark:text-font-subtle-dark mt-1">
+          Academic institute administration, learning workflows, faculty management, and real-time operations.
+        </p>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        {% for btn in quick_links %}
+          <a href="{{ btn.url }}" {% if btn.external %}target="_blank" rel="noopener noreferrer"{% endif %}
+             class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-default transition border
+                    {% if btn.variant == 'primary' %}
+                      bg-primary-600 hover:bg-primary-700 text-white border-transparent shadow-xs
+                    {% elif btn.variant == 'warning' %}
+                      bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-800/40
+                    {% else %}
+                      bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-800/40
+                    {% endif %}">
+            <span class="material-symbols-outlined text-sm">{{ btn.icon }}</span>
+            <span>{{ btn.title }}</span>
+            {% if btn.count is not None and btn.count > 0 %}
+              <span class="ml-1 px-1.5 py-0.2 bg-amber-500 text-white text-[10px] font-bold rounded-full">{{ btn.count }}</span>
+            {% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. KPI METRICS CARDS GRID (8 CARDS) -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    {% for card in kpi_cards %}
+      <div class="bg-white dark:bg-base-900 border border-base-200 dark:border-base-800 rounded-default p-4 shadow-xs flex flex-col justify-between hover:border-primary-500 transition">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-font-subtle-light dark:text-font-subtle-dark">{{ card.title }}</span>
+          <span class="material-symbols-outlined text-lg
+            {% if card.color == 'primary' %}text-primary-600 dark:text-primary-500
+            {% elif card.color == 'success' %}text-emerald-600 dark:text-emerald-500
+            {% elif card.color == 'warning' %}text-amber-600 dark:text-amber-500
+            {% elif card.color == 'danger' %}text-rose-600 dark:text-rose-500
+            {% else %}text-sky-600 dark:text-sky-500{% endif %}">
+            {{ card.icon }}
+          </span>
+        </div>
+        <div class="mt-3 mb-1">
+          <span class="text-2xl font-extrabold text-font-important-light dark:text-font-important-dark tracking-tight">
+            {{ card.value }}
+          </span>
+        </div>
+        <span class="text-[11px] text-font-subtle-light dark:text-font-subtle-dark truncate">
+          {{ card.subtitle }}
+        </span>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- 3. TWO METRIC CHARTS -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <!-- Chart 1: Test Attempts Velocity (7 Days) -->
+    <div class="bg-white dark:bg-base-900 border border-base-200 dark:border-base-800 rounded-default p-5 shadow-xs">
+      <div class="flex items-center justify-between pb-3 border-b border-base-100 dark:border-base-800">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary-600 dark:text-primary-500">insights</span>
+          <h3 class="text-sm font-bold text-font-important-light dark:text-font-important-dark">Test Series Attempts (Last 7 Days)</h3>
+        </div>
+        <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 font-bold">
+          Total: {{ tests_7d }}
+        </span>
+      </div>
+      <div class="pt-4">
+        <div class="flex items-end gap-3 h-32 px-2">
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-primary-200 dark:bg-primary-900/60 rounded-t-sm h-[35%] transition hover:bg-primary-500"></div>
+            <span class="text-[10px] text-font-subtle-light dark:text-font-subtle-dark">D-6</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-primary-200 dark:bg-primary-900/60 rounded-t-sm h-[48%] transition hover:bg-primary-500"></div>
+            <span class="text-[10px] text-font-subtle-light dark:text-font-subtle-dark">D-5</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-primary-200 dark:bg-primary-900/60 rounded-t-sm h-[40%] transition hover:bg-primary-500"></div>
+            <span class="text-[10px] text-font-subtle-light dark:text-font-subtle-dark">D-4</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-primary-200 dark:bg-primary-900/60 rounded-t-sm h-[65%] transition hover:bg-primary-500"></div>
+            <span class="text-[10px] text-font-subtle-light dark:text-font-subtle-dark">D-3</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-primary-200 dark:bg-primary-900/60 rounded-t-sm h-[55%] transition hover:bg-primary-500"></div>
+            <span class="text-[10px] text-font-subtle-light dark:text-font-subtle-dark">D-2</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-primary-300 dark:bg-primary-800 rounded-t-sm h-[78%] transition hover:bg-primary-500"></div>
+            <span class="text-[10px] text-font-subtle-light dark:text-font-subtle-dark">Yday</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-primary-600 dark:bg-primary-500 rounded-t-sm h-[92%] transition hover:bg-primary-400"></div>
+            <span class="text-[10px] font-bold text-primary-600 dark:text-primary-400">Today</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 2: Order Volume & Revenue Velocity (30 Days) -->
+    <div class="bg-white dark:bg-base-900 border border-base-200 dark:border-base-800 rounded-default p-5 shadow-xs">
+      <div class="flex items-center justify-between pb-3 border-b border-base-100 dark:border-base-800">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-emerald-600 dark:text-emerald-500">trending_up</span>
+          <h3 class="text-sm font-bold text-font-important-light dark:text-font-important-dark">Orders Velocity (Last 30 Days)</h3>
+        </div>
+        <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold">
+          {% if is_superuser and revenue_30d is not None %}
+            ₹{{ revenue_30d|floatformat:2 }} ({{ total_orders_30d }} Orders)
+          {% else %}
+            {{ total_orders_30d }} Paid Orders
+          {% endif %}
+        </span>
+      </div>
+      <div class="pt-4">
+        <div class="flex items-end gap-3 h-32 px-2">
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-emerald-200 dark:bg-emerald-900/60 rounded-t-sm h-[30%] transition hover:bg-emerald-500"></div>
+            <span class="text-[10px] text-font-subtle-light dark:text-font-subtle-dark">W-4</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-emerald-300 dark:bg-emerald-900/80 rounded-t-sm h-[50%] transition hover:bg-emerald-500"></div>
+            <span class="text-[10px] text-font-subtle-light dark:text-font-subtle-dark">W-3</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-emerald-400 dark:bg-emerald-700 rounded-t-sm h-[68%] transition hover:bg-emerald-500"></div>
+            <span class="text-[10px] text-font-subtle-light dark:text-font-subtle-dark">W-2</span>
+          </div>
+          <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+            <div class="w-full bg-emerald-600 dark:bg-emerald-500 rounded-t-sm h-[85%] transition hover:bg-emerald-400"></div>
+            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">W-1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. APP LIST & AUDIT HISTORY -->
+  <div class="flex flex-col lg:flex-row gap-6 mt-2">
+    <div class="flex flex-col gap-5 grow">
+      {% include "unfold/helpers/app_list_default.html" with show_changelinks=True %}
+    </div>
+
+    {% include "unfold/helpers/history.html" %}
+  </div>
+</div>
+{% endblock %}

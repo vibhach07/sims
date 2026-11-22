@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }}</title>
+  <link rel="icon" href="/static/img/favicon.svg" type="image/svg+xml">
+  <style>
+    body {
+      background-color: #061426;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      margin: 0;
+    }
+    .box {
+      max-width: 520px;
+      background: #0c203a;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 16px;
+      padding: 40px 32px;
+    }
+    .code { font-size: 64px; font-weight: 800; color: #ef4444; margin-bottom: 8px; }
+    h2 { font-size: 22px; margin-bottom: 12px; }
+    p { font-size: 14px; color: #94a3b8; line-height: 1.5; margin-bottom: 24px; }
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #D9A52E;
+      color: #061426;
+      font-weight: 700;
+      text-decoration: none;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="code">500</div>
+    <h2>Internal Server Error</h2>
+    <p>A server incident occurred. Our technical administrators have been notified.</p>
+    <a href="/" class="btn">Back to API Gateway</a>
+  </div>
+</body>
+</html>

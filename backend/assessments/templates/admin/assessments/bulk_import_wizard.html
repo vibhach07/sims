@@ -1,0 +1,1340 @@
+{% extends 'admin/base.html' %}
+{% load i18n admin_urls static %}
+
+{% block title %}5-Step Bulk Question & Examination Import Wizard | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<!-- KaTeX for live formula rendering -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+<style>
+  /* ── Universal Theme System for Import Wizard ── */
+  :root {
+    --wiz-bg: #f8fafc;
+    --wiz-card: #ffffff;
+    --wiz-box: #f1f5f9;
+    --wiz-border: #e2e8f0;
+    --wiz-text: #0f172a;
+    --wiz-text-sub: #475569;
+    --wiz-input-bg: #ffffff;
+    --wiz-input-border: #cbd5e1;
+    --wiz-input-text: #0f172a;
+  }
+
+  html.dark, body.dark, [data-theme="dark"] {
+    --wiz-bg: #0b1120;
+    --wiz-card: #131d31;
+    --wiz-box: #172339;
+    --wiz-border: #23334d;
+    --wiz-text: #f8fafc;
+    --wiz-text-sub: #94a3b8;
+    --wiz-input-bg: #0b1322;
+    --wiz-input-border: #334155;
+    --wiz-input-text: #f8fafc;
+  }
+
+  .wizard-card {
+    background-color: var(--wiz-card) !important;
+    color: var(--wiz-text) !important;
+    border: 1px solid var(--wiz-border) !important;
+  }
+
+  .wizard-box {
+    background-color: var(--wiz-box) !important;
+    color: var(--wiz-text) !important;
+    border: 1px solid var(--wiz-border) !important;
+  }
+
+  .wizard-box label, .wizard-box span, .wizard-box div {
+    color: var(--wiz-text) !important;
+  }
+
+  .wizard-input {
+    background-color: var(--wiz-input-bg) !important;
+    color: var(--wiz-input-text) !important;
+    border: 1px solid var(--wiz-input-border) !important;
+  }
+  .wizard-input:focus {
+    outline: none;
+    border-color: #0f766e !important;
+    box-shadow: 0 0 0 1px #0f766e;
+  }
+  select.wizard-input option {
+    background-color: var(--wiz-card) !important;
+    color: var(--wiz-text) !important;
+  }
+
+  .wizard-heading {
+    color: var(--wiz-text) !important;
+  }
+
+  .wizard-label {
+    color: var(--wiz-text) !important;
+    font-weight: 700;
+  }
+
+  .wizard-subtext {
+    color: var(--wiz-text-sub) !important;
+  }
+
+  .wizard-dropzone {
+    background-color: var(--wiz-box) !important;
+    border: 2px dashed var(--wiz-input-border) !important;
+    transition: all 0.2s ease-in-out;
+  }
+  .wizard-dropzone:hover {
+    border-color: #0f766e !important;
+  }
+
+  .wizard-stat-card {
+    background-color: var(--wiz-box) !important;
+    border: 1px solid var(--wiz-border) !important;
+    color: var(--wiz-text) !important;
+  }
+
+  .wizard-stat-highlight {
+    background-color: #fffbeb;
+    border: 2px solid #f59e0b;
+    color: #b45309;
+  }
+  html.dark .wizard-stat-highlight, body.dark .wizard-stat-highlight {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    border: 2px solid #f59e0b !important;
+    color: #fbbf24 !important;
+  }
+
+  .step-pill {
+    transition: all 0.2s ease-in-out;
+    background-color: var(--wiz-card);
+    border-color: var(--wiz-border);
+  }
+  .step-pill.active {
+    border-color: #0f766e !important;
+    background-color: rgba(15, 118, 110, 0.1) !important;
+    color: #0f766e !important;
+    font-weight: 700;
+  }
+  html.dark .step-pill.active, body.dark .step-pill.active {
+    background-color: rgba(15, 118, 110, 0.25) !important;
+    color: #34d399 !important;
+    border-color: #0f766e !important;
+  }
+  .step-pill.completed {
+    border-color: #10b981 !important;
+    color: #0f766e !important;
+  }
+  html.dark .step-pill.completed, body.dark .step-pill.completed {
+    color: #34d399 !important;
+  }
+
+  .theme-toggle-btn {
+    background-color: var(--wiz-box);
+    color: var(--wiz-text);
+    border: 1px solid var(--wiz-border);
+  }
+  .theme-toggle-btn:hover {
+    border-color: #0f766e;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-16">
+
+  <!-- TOP HEADER WITH TITLE & THEME TOGGLE -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-emerald-600 text-2xl">auto_stories</span>
+      <h1 class="text-xl font-bold wizard-heading">5-Step Bulk Question & Examination Import Wizard</h1>
+    </div>
+    <button type="button" onclick="toggleTheme()" class="theme-toggle-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition w-fit">
+      <span class="material-symbols-outlined text-sm theme-icon">dark_mode</span>
+      <span class="theme-label">Dark Mode</span>
+    </button>
+  </div>
+
+  <!-- TOP WIZARD STEP NAVIGATION -->
+  <div class="wizard-card rounded-default p-4 shadow-xs">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <!-- Step 1 -->
+      <div id="step-nav-1" class="step-pill active flex items-center gap-3 p-3 rounded-lg border border-base-200 dark:border-base-800 cursor-pointer" onclick="goToStep(1)">
+        <div id="step-badge-1" class="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">1</div>
+        <div class="min-w-0">
+          <div class="text-[10px] uppercase font-bold tracking-wider wizard-subtext">STEP 1</div>
+          <div class="text-xs font-semibold truncate wizard-heading">Upload Document</div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div id="step-nav-2" class="step-pill flex items-center gap-3 p-3 rounded-lg border border-base-200 dark:border-base-800 cursor-pointer" onclick="goToStep(2)">
+        <div id="step-badge-2" class="w-7 h-7 rounded-full bg-base-200 dark:bg-base-700 text-font-default-light dark:text-font-default-dark font-bold text-xs flex items-center justify-center shrink-0">2</div>
+        <div class="min-w-0">
+          <div class="text-[10px] uppercase font-bold tracking-wider wizard-subtext">STEP 2</div>
+          <div class="text-xs font-semibold truncate wizard-heading">Processing</div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div id="step-nav-3" class="step-pill flex items-center gap-3 p-3 rounded-lg border border-base-200 dark:border-base-800 cursor-pointer" onclick="goToStep(3)">
+        <div id="step-badge-3" class="w-7 h-7 rounded-full bg-base-200 dark:bg-base-700 text-font-default-light dark:text-font-default-dark font-bold text-xs flex items-center justify-center shrink-0">3</div>
+        <div class="min-w-0">
+          <div class="text-[10px] uppercase font-bold tracking-wider wizard-subtext">STEP 3</div>
+          <div class="text-xs font-semibold truncate wizard-heading">Question Review</div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div id="step-nav-4" class="step-pill flex items-center gap-3 p-3 rounded-lg border border-base-200 dark:border-base-800 cursor-pointer" onclick="goToStep(4)">
+        <div id="step-badge-4" class="w-7 h-7 rounded-full bg-base-200 dark:bg-base-700 text-font-default-light dark:text-font-default-dark font-bold text-xs flex items-center justify-center shrink-0">4</div>
+        <div class="min-w-0">
+          <div class="text-[10px] uppercase font-bold tracking-wider wizard-subtext">STEP 4</div>
+          <div class="text-xs font-semibold truncate wizard-heading">Test Configuration</div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div id="step-nav-5" class="step-pill flex items-center gap-3 p-3 rounded-lg border border-base-200 dark:border-base-800 cursor-pointer" onclick="goToStep(5)">
+        <div id="step-badge-5" class="w-7 h-7 rounded-full bg-base-200 dark:bg-base-700 text-font-default-light dark:text-font-default-dark font-bold text-xs flex items-center justify-center shrink-0">5</div>
+        <div class="min-w-0">
+          <div class="text-[10px] uppercase font-bold tracking-wider wizard-subtext">STEP 5</div>
+          <div class="text-xs font-semibold truncate wizard-heading">Preview & Publish</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1: UPLOAD DOCUMENT -->
+  <div id="step-container-1" class="step-container flex flex-col gap-6">
+    <div class="wizard-card rounded-default p-6 shadow-xs">
+      <div class="flex items-center justify-between pb-4 border-b border-base-200 dark:border-base-800 mb-6">
+        <div>
+          <h2 class="text-lg font-bold wizard-heading flex items-center gap-2">
+            <span class="material-symbols-outlined text-emerald-600">cloud_upload</span>
+            Step 1 — Upload Question Paper / Documents
+          </h2>
+          <p class="text-xs wizard-subtext mt-1">
+            Upload single or multiple files. No file size limit. Ingests PDFs, Word docs, Scanned images (OCR), CSV, Excel, TXT, or JSON.
+          </p>
+        </div>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
+          <span class="material-symbols-outlined text-sm">all_inclusive</span>
+          No File Size Limit
+        </span>
+      </div>
+
+      <!-- Target Selection Mode (High-contrast fix) -->
+      <div class="wizard-box mb-6 p-4 rounded-lg">
+        <label class="text-xs font-bold wizard-heading block mb-2">
+          Target Import Destination:
+        </label>
+        <div class="flex flex-col sm:flex-row gap-4">
+          <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+            <input type="radio" name="import_mode" value="new" checked onchange="toggleImportMode(this.value)" class="text-emerald-600 focus:ring-emerald-500">
+            <span class="font-bold wizard-heading">✨ Create New Test Series Paper</span>
+          </label>
+          <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+            <input type="radio" name="import_mode" value="existing" onchange="toggleImportMode(this.value)" class="text-emerald-600 focus:ring-emerald-500">
+            <span class="font-bold wizard-heading">📥 Ingest into Existing Test Series</span>
+          </label>
+        </div>
+
+        <div id="existing-series-picker" class="hidden mt-3 pt-3 border-t border-base-200 dark:border-base-700">
+          <label for="target_existing_test_id" class="text-xs font-semibold wizard-subtext block mb-1">
+            Choose Target Test Series:
+          </label>
+          <select id="target_existing_test_id" class="wizard-input w-full max-w-xl text-sm rounded-default p-2.5">
+            <option value="">-- Select Test Series to Append Questions --</option>
+            {% for ts in test_series_list %}
+              <option value="{{ ts.id }}">{{ ts.title }} ({{ ts.exam }}) — Current Questions: {{ ts.questions_count }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Drag & Drop Upload Zone -->
+      <div id="drop-zone" class="wizard-dropzone rounded-xl p-8 text-center cursor-pointer" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" multiple accept=".csv,.xlsx,.xls,.docx,.doc,.pdf,.txt,.json,.png,.jpg,.jpeg,.webp,.bmp,.tiff" class="hidden" onchange="handleFilesSelected(this.files)">
+        <span class="material-symbols-outlined text-5xl text-emerald-600 mb-2">upload_file</span>
+        <h3 class="text-sm font-bold wizard-heading">
+          Drag & drop your question documents or images here, or <span class="text-emerald-600 dark:text-emerald-400 underline">browse files</span>
+        </h3>
+        <p class="text-xs wizard-subtext mt-1">
+          Supports multi-file batch upload: PDF, Word (.docx), Scanned Images (PNG, JPG, WEBP), Excel (.xlsx), CSV, TXT, JSON
+        </p>
+      </div>
+
+      <!-- Selected Files Preview List -->
+      <div id="selected-files-list" class="mt-4 flex flex-col gap-2"></div>
+
+      <!-- Action Button -->
+      <div class="mt-6 flex items-center justify-between pt-4 border-t border-base-200 dark:border-base-800">
+        <a href="{% url 'admin:assessments_testseries_changelist' %}" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-default border border-base-300 dark:border-base-700 hover:bg-base-100 dark:hover:bg-base-800 text-xs font-semibold">
+          &larr; Back to Test Series
+        </a>
+        <button id="btn-start-process" onclick="startProcessing()" disabled class="inline-flex items-center gap-2 px-6 py-2.5 rounded-default bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs shadow-xs transition cursor-pointer">
+          <span>Start Extraction & Processing</span>
+          <span class="material-symbols-outlined text-sm">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: PROCESSING (IMAGE 1 REPLICA) -->
+  <div id="step-container-2" class="step-container hidden flex flex-col gap-6">
+    <div class="wizard-card rounded-default p-8 shadow-xs">
+      <div class="text-center max-w-xl mx-auto mb-8">
+        <div class="w-14 h-14 mx-auto rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3">
+          <span class="material-symbols-outlined text-3xl animate-spin">progress_activity</span>
+        </div>
+        <h2 class="text-lg font-bold wizard-heading">
+          Document Intelligence Ingestion Pipeline
+        </h2>
+        <p id="processing-status-text" class="text-xs wizard-subtext mt-1">
+          Extracting questions, running OCR, detecting diagrams, and normalizing LaTeX formulas...
+        </p>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-base-200 dark:bg-base-700 rounded-full h-2.5 mt-5 overflow-hidden">
+          <div id="pipeline-progress-bar" class="bg-emerald-600 h-2.5 rounded-full transition-all duration-300" style="width: 25%"></div>
+        </div>
+        <span id="pipeline-progress-percent" class="text-xs font-bold text-emerald-600 mt-2 block">25%</span>
+      </div>
+
+      <!-- Pipeline Engines Status (Image 1 replica) -->
+      <div class="max-w-2xl mx-auto border border-base-200 dark:border-base-800 rounded-xl overflow-hidden">
+        <div class="wizard-box px-4 py-2.5 font-bold text-xs border-b border-base-200 dark:border-base-800 grid grid-cols-12 gap-2">
+          <div class="col-span-4 wizard-heading">Technology</div>
+          <div class="col-span-6 wizard-heading">Kaam / Function</div>
+          <div class="col-span-2 text-right wizard-heading">Status</div>
+        </div>
+
+        <div class="divide-y divide-base-200 dark:divide-base-800 text-xs">
+          <!-- 1. PDF Parser -->
+          <div class="p-3 grid grid-cols-12 gap-2 items-center wizard-card">
+            <div class="col-span-4 font-bold flex items-center gap-2 wizard-heading">
+              <span class="material-symbols-outlined text-emerald-600 text-base">picture_as_pdf</span>
+              PDF Parser
+            </div>
+            <div class="col-span-6 wizard-subtext">
+              PDF se normal text aur formatting extract karega.
+            </div>
+            <div id="engine-pdf" class="col-span-2 text-right font-semibold text-emerald-600">Working...</div>
+          </div>
+
+          <!-- 2. Image Extraction -->
+          <div class="p-3 grid grid-cols-12 gap-2 items-center wizard-card">
+            <div class="col-span-4 font-bold flex items-center gap-2 wizard-heading">
+              <span class="material-symbols-outlined text-blue-600 text-base">image</span>
+              Image Extraction
+            </div>
+            <div class="col-span-6 wizard-subtext">
+              PDF/DOCX ke andar embedded images aur diagrams nikalega.
+            </div>
+            <div id="engine-img" class="col-span-2 text-right font-semibold wizard-subtext">Waiting</div>
+          </div>
+
+          <!-- 3. OCR -->
+          <div class="p-3 grid grid-cols-12 gap-2 items-center wizard-card">
+            <div class="col-span-4 font-bold flex items-center gap-2 wizard-heading">
+              <span class="material-symbols-outlined text-amber-600 text-base">document_scanner</span>
+              OCR Engine
+            </div>
+            <div class="col-span-6 wizard-subtext">
+              Image aur scanned paper ke andar likha text read karega.
+            </div>
+            <div id="engine-ocr" class="col-span-2 text-right font-semibold wizard-subtext">Waiting</div>
+          </div>
+
+          <!-- 4. Vision AI / LaTeX -->
+          <div class="p-3 grid grid-cols-12 gap-2 items-center wizard-card">
+            <div class="col-span-4 font-bold flex items-center gap-2 wizard-heading">
+              <span class="material-symbols-outlined text-purple-600 text-base">functions</span>
+              Vision AI / LaTeX
+            </div>
+            <div class="col-span-6 wizard-subtext">
+              Diagram, figure aur equation ko LaTeX me interpret karega.
+            </div>
+            <div id="engine-vision" class="col-span-2 text-right font-semibold wizard-subtext">Waiting</div>
+          </div>
+
+          <!-- 5. Question Parser -->
+          <div class="p-3 grid grid-cols-12 gap-2 items-center wizard-card">
+            <div class="col-span-4 font-bold flex items-center gap-2 wizard-heading">
+              <span class="material-symbols-outlined text-teal-600 text-base">quiz</span>
+              Question Parser
+            </div>
+            <div class="col-span-6 wizard-subtext">
+              Text aur image ko sahi question ke saath associate karega.
+            </div>
+            <div id="engine-parser" class="col-span-2 text-right font-semibold wizard-subtext">Waiting</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: QUESTION REVIEW & INLINE EDITOR -->
+  <div id="step-container-3" class="step-container hidden flex flex-col gap-6">
+    <div class="wizard-card rounded-default p-6 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-base-200 dark:border-base-800 gap-4 mb-6">
+        <div>
+          <h2 class="text-lg font-bold wizard-heading flex items-center gap-2">
+            <span class="material-symbols-outlined text-emerald-600">checklist</span>
+            Step 3 — Question Review & Live Editor
+          </h2>
+          <p class="text-xs wizard-subtext mt-1">
+            Review parsed questions, LaTeX equations, options, answer keys, and diagrams. Edit inline if necessary.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="badge-total-extracted" class="wizard-box px-3 py-1 rounded-full text-xs font-bold">
+            0 Questions
+          </span>
+          <button onclick="addNewQuestionRow()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40 text-xs font-bold hover:bg-emerald-100 transition cursor-pointer">
+            <span class="material-symbols-outlined text-sm">add</span>
+            Add Question
+          </button>
+        </div>
+      </div>
+
+      <!-- Questions List Container -->
+      <div id="questions-review-list" class="flex flex-col gap-4"></div>
+
+      <!-- Navigation Footer -->
+      <div class="mt-6 flex items-center justify-between pt-4 border-t border-base-200 dark:border-base-800">
+        <button onclick="goToStep(1)" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-default border border-base-300 dark:border-base-700 hover:bg-base-100 dark:hover:bg-base-800 text-xs font-semibold cursor-pointer">
+          &larr; Back to Upload
+        </button>
+        <button onclick="saveAndProceedToStep4()" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-default bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer">
+          <span>Proceed to Test Configuration</span>
+          <span class="material-symbols-outlined text-sm">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: TEST CONFIGURATION (EXACT MATCH TO IMAGE 3!) -->
+  <div id="step-container-4" class="step-container hidden flex flex-col gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- LEFT COLUMN: Examination Parameters -->
+      <div class="lg:col-span-7 wizard-card rounded-default p-6 shadow-xs space-y-4">
+        <div>
+          <h2 class="text-base font-bold wizard-heading">
+            Step 4 — Examination Parameters
+          </h2>
+          <p class="text-xs wizard-subtext mt-0.5">
+            Define paper metadata, exam discipline, and test guidelines.
+          </p>
+        </div>
+
+        <!-- Test Paper Title * -->
+        <div class="space-y-1">
+          <label for="conf-title" class="text-xs font-bold wizard-label block">
+            Test Paper Title *
+          </label>
+          <input type="text" id="conf-title" required class="wizard-input w-full text-sm rounded-default p-2.5" placeholder="e.g. GATE Chemical Engineering CBT Test Series — Mock Test #03">
+        </div>
+
+        <!-- Discipline / Branch * & Test Type * -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <label for="conf-discipline" class="text-xs font-bold wizard-label block">
+              Discipline / Branch *
+            </label>
+            <select id="conf-discipline" class="wizard-input w-full text-sm rounded-default p-2.5">
+              <option value="CH" selected>CH</option>
+              <option value="CS">CS</option>
+              <option value="ME">ME</option>
+              <option value="CE">CE</option>
+              <option value="EE">EE</option>
+              <option value="EC">EC</option>
+              <option value="IN">IN</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label for="conf-test-type" class="text-xs font-bold wizard-label block">
+              Test Type *
+            </label>
+            <select id="conf-test-type" class="wizard-input w-full text-sm rounded-default p-2.5">
+              <option value="All-India Open Mock" selected>All-India Open Mock</option>
+              <option value="Full Length Mock">Full Length Mock</option>
+              <option value="Subject Wise">Subject Wise</option>
+              <option value="Topic Wise">Topic Wise</option>
+              <option value="Previous Year Paper">Previous Year Paper</option>
+              <option value="Chapter Practice">Chapter Practice</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Assigned Test Series Package (Purchase Dependency) * -->
+        <div class="space-y-1">
+          <label for="conf-package" class="text-xs font-bold wizard-label block">
+            Assigned Test Series Package (Purchase Dependency) *
+          </label>
+          <select id="conf-package" class="wizard-input w-full text-sm rounded-default p-2.5">
+            <option value="">[Create Standalone Package / No Dependency]</option>
+            {% for c in courses_list %}
+              <option value="{{ c.id }}">{{ c.title }} (₹{{ c.price|default:'0.00' }})</option>
+            {% endfor %}
+          </select>
+          <span class="text-[11px] wizard-subtext block">
+            Students must purchase this specific test series to unlock and attempt this examination.
+          </span>
+        </div>
+
+        <!-- Publishing Status * & Visibility & Access Control * -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <label for="conf-status" class="text-xs font-bold wizard-label block">
+              Publishing Status *
+            </label>
+            <select id="conf-status" class="wizard-input w-full text-sm rounded-default p-2.5">
+              <option value="published" selected>Published (Visible to eligible students)</option>
+              <option value="draft">Draft (Admin Only)</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label for="conf-visibility" class="text-xs font-bold wizard-label block">
+              Visibility & Access Control *
+            </label>
+            <select id="conf-visibility" class="wizard-input w-full text-sm rounded-default p-2.5">
+              <option value="restricted" selected>🔒 Restricted (Matching Branch + Purchased Series)</option>
+              <option value="public">🌐 Public (All Enrolled Students)</option>
+              <option value="free">🎁 Free Open Mock</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Dates & Immediate lock -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <label for="conf-start-date" class="text-xs font-bold wizard-label block">
+              Test Start Date (Unlocks)
+            </label>
+            <input type="datetime-local" id="conf-start-date" class="wizard-input w-full text-sm rounded-default p-2">
+          </div>
+          <div class="space-y-1">
+            <label for="conf-end-date" class="text-xs font-bold wizard-label block">
+              Test End Date (Submissions Close)
+            </label>
+            <input type="datetime-local" id="conf-end-date" class="wizard-input w-full text-sm rounded-default p-2">
+            <span class="text-[11px] wizard-subtext block">Leave blank for open-ended access.</span>
+          </div>
+        </div>
+
+        <div class="pt-1">
+          <label class="inline-flex items-center gap-2 text-xs font-bold text-emerald-700 dark:text-emerald-400 cursor-pointer">
+            <input type="checkbox" id="conf-available-immediately" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+            <span>⚡ Available Immediately (No date/time lock for students)</span>
+          </label>
+        </div>
+
+        <!-- Subject & Topic -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <label for="conf-subject" class="text-xs font-bold wizard-label block">
+              Subject
+            </label>
+            <input type="text" id="conf-subject" class="wizard-input w-full text-sm rounded-default p-2.5" placeholder="e.g. Computer Science / Physics">
+          </div>
+          <div class="space-y-1">
+            <label for="conf-topic" class="text-xs font-bold wizard-label block">
+              Topic
+            </label>
+            <input type="text" id="conf-topic" class="wizard-input w-full text-sm rounded-default p-2.5" placeholder="e.g. Algorithms & Data Structures">
+          </div>
+        </div>
+
+        <!-- Duration & Language -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <label for="conf-duration" class="text-xs font-bold wizard-label block">
+              Duration (Minutes)
+            </label>
+            <input type="number" id="conf-duration" value="180" min="5" max="600" class="wizard-input w-full text-sm rounded-default p-2.5">
+          </div>
+          <div class="space-y-1">
+            <label for="conf-language" class="text-xs font-bold wizard-label block">
+              Examination Language
+            </label>
+            <select id="conf-language" class="wizard-input w-full text-sm rounded-default p-2.5">
+              <option value="English" selected>English</option>
+              <option value="Hindi">Hindi</option>
+              <option value="Bilingual">Bilingual (English + Hindi)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Examination Instructions • Section Details -->
+        <div class="space-y-1">
+          <label for="conf-instructions" class="text-xs font-bold wizard-label block">
+            Examination Instructions • Section Details
+          </label>
+          <textarea id="conf-instructions" rows="4" class="wizard-input w-full text-xs font-mono rounded-default p-2.5">1. Total duration of exam is monitored by the server timer.
+2. Section A contains 1-mark questions with 0.33 negative marking for MCQs.
+3. Section B contains 2-mark questions with 0.66 negative marking for MCQs.
+4. MSQ and NAT questions carry NO negative marking.</textarea>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Live Marks Distribution Engine (Exact replica from Image 3!) -->
+      <div class="lg:col-span-5 wizard-card rounded-default p-6 shadow-xs space-y-5">
+        <div>
+          <h2 class="text-base font-bold wizard-heading">
+            Live Marks Distribution Engine
+          </h2>
+          <p class="text-xs wizard-subtext mt-0.5">
+            Intelligent calculation of 1-mark & 2-mark categories.
+          </p>
+        </div>
+
+        <!-- Distribution Strategy Dropdown -->
+        <div class="space-y-1">
+          <label for="conf-strategy" class="text-xs font-semibold wizard-subtext block">
+            Distribution Strategy:
+          </label>
+          <select id="conf-strategy" onchange="calculateMarksDistribution()" class="wizard-input w-full text-xs font-semibold rounded-default p-2">
+            <option value="balanced_50_50" selected>Balanced 50/50 (5×1M + 5×2M)</option>
+            <option value="standard_gate">Standard GATE (30×1M + 35×2M = 100M)</option>
+            <option value="all_1m">All 1-Mark Questions</option>
+            <option value="all_2m">All 2-Mark Questions</option>
+            <option value="all_4m">All 4-Mark Questions (Standard)</option>
+            <option value="keep_parsed">Custom / Keep Parsed Marks</option>
+          </select>
+        </div>
+
+        <!-- 4 Metrics Cards (High contrast) -->
+        <div class="grid grid-cols-4 gap-2 text-center">
+          <!-- Card 1 -->
+          <div class="wizard-stat-card p-3 rounded-lg">
+            <div id="stat-total-q" class="text-lg font-bold wizard-heading">10</div>
+            <div class="text-[10px] wizard-subtext leading-tight mt-1">Total Questions</div>
+          </div>
+          <!-- Card 2 -->
+          <div class="wizard-stat-card p-3 rounded-lg">
+            <div id="stat-sec-a-q" class="text-lg font-bold wizard-heading">5</div>
+            <div class="text-[10px] wizard-subtext leading-tight mt-1">1-Mark Qs (Sec A)</div>
+          </div>
+          <!-- Card 3 -->
+          <div class="wizard-stat-card p-3 rounded-lg">
+            <div id="stat-sec-b-q" class="text-lg font-bold wizard-heading">5</div>
+            <div class="text-[10px] wizard-subtext leading-tight mt-1">2-Mark Qs (Sec B)</div>
+          </div>
+          <!-- Card 4 (Highlighted in yellow/amber border!) -->
+          <div class="wizard-stat-highlight p-3 rounded-lg">
+            <div id="stat-total-marks" class="text-lg font-bold">15.00</div>
+            <div class="text-[10px] font-bold leading-tight mt-1">Total Marks</div>
+          </div>
+        </div>
+
+        <!-- Section Progress Bar -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-[11px] font-semibold wizard-subtext">
+            <span id="label-sec-a" class="text-emerald-700 dark:text-emerald-400">Section A (1-Mark): 50% (5 Qs)</span>
+            <span id="label-sec-b" class="text-amber-700 dark:text-amber-400">Section B (2-Mark): 50% (5 Qs)</span>
+          </div>
+          <div class="w-full bg-base-200 dark:bg-base-700 rounded-full h-2 flex overflow-hidden">
+            <div id="bar-sec-a" class="bg-emerald-600 h-2" style="width: 50%"></div>
+            <div id="bar-sec-b" class="bg-amber-500 h-2" style="width: 50%"></div>
+          </div>
+        </div>
+
+        <!-- Badges (MCQ, MSQ, NAT) -->
+        <div class="flex items-center gap-2 pt-1 flex-wrap">
+          <span class="wizard-box px-2.5 py-1 rounded text-[11px] font-semibold">
+            <strong class="text-primary-600">MCQ</strong> <span id="badge-mcq-count">10</span> Single Correct
+          </span>
+          <span class="px-2.5 py-1 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[11px] font-semibold text-blue-700 dark:text-blue-300">
+            <strong class="text-blue-600">MSQ</strong> <span id="badge-msq-count">0</span> Multi-Select
+          </span>
+          <span class="px-2.5 py-1 rounded bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
+            <strong class="text-amber-600">NAT</strong> <span id="badge-nat-count">0</span> Numerical
+          </span>
+        </div>
+
+        <!-- Formula Breakdown Box -->
+        <div class="wizard-box p-3 rounded-lg text-center">
+          <div id="formula-breakdown-text" class="text-xs font-semibold wizard-heading">
+            5 Questions × 1 Mark (5 M) + 5 Questions × 2 Marks (10 M) = 15.00 Total Marks
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="pt-3 flex items-center justify-between border-t border-base-200 dark:border-base-800">
+          <button onclick="goToStep(3)" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-default border border-base-300 dark:border-base-700 hover:bg-base-100 dark:hover:bg-base-800 text-xs font-semibold cursor-pointer">
+            &larr; Back to Questions Review
+          </button>
+          <button onclick="goToStep(5)" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-default bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer">
+            <span>Proceed to Examination Preview</span>
+            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 5: PREVIEW & PUBLISH -->
+  <div id="step-container-5" class="step-container hidden flex flex-col gap-6">
+    <div class="wizard-card rounded-default p-6 shadow-xs space-y-6">
+      <div class="flex items-center justify-between pb-4 border-b border-base-200 dark:border-base-800">
+        <div>
+          <h2 class="text-lg font-bold wizard-heading flex items-center gap-2">
+            <span class="material-symbols-outlined text-emerald-600">verified</span>
+            Step 5 — Final Examination Preview & One-Click Publish
+          </h2>
+          <p class="text-xs wizard-subtext mt-1">
+            Review test series structure, parameters, questions, and confirm database publication.
+          </p>
+        </div>
+        <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+          Ready to Publish
+        </span>
+      </div>
+
+      <!-- Test Summary Card -->
+      <div class="wizard-box grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-xl">
+        <div>
+          <span class="text-[11px] wizard-subtext block">Test Paper Title</span>
+          <strong id="prev-title" class="text-sm font-bold wizard-heading">GATE Mock Test</strong>
+        </div>
+        <div>
+          <span class="text-[11px] wizard-subtext block">Discipline / Branch</span>
+          <strong id="prev-discipline" class="text-sm font-bold wizard-heading">CH</strong>
+        </div>
+        <div>
+          <span class="text-[11px] wizard-subtext block">Duration & Marks</span>
+          <strong id="prev-duration-marks" class="text-sm font-bold wizard-heading">180 Mins • 15.00 Marks</strong>
+        </div>
+        <div>
+          <span class="text-[11px] wizard-subtext block">Questions Total</span>
+          <strong id="prev-q-count" class="text-sm font-bold wizard-heading">10 Questions</strong>
+        </div>
+      </div>
+
+      <!-- Questions CBT Preview List -->
+      <div class="space-y-4">
+        <h3 class="text-sm font-bold wizard-heading">
+          Examination Questions (Student View)
+        </h3>
+        <div id="preview-questions-container" class="space-y-4 max-h-[600px] overflow-y-auto p-1"></div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="flex items-center justify-between pt-4 border-t border-base-200 dark:border-base-800">
+        <button onclick="goToStep(4)" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-default border border-base-300 dark:border-base-700 hover:bg-base-100 dark:hover:bg-base-800 text-xs font-semibold cursor-pointer">
+          &larr; Back to Parameters
+        </button>
+        <button id="btn-publish-test" onclick="publishTestSeries()" class="inline-flex items-center gap-2 px-8 py-3 rounded-default bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition cursor-pointer">
+          <span class="material-symbols-outlined text-lg">rocket_launch</span>
+          <span id="publish-btn-text">Confirm & Publish Test Series</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let parsedQuestions = [];
+  let extractedImages = [];
+  let selectedFiles = [];
+  let currentStep = 1;
+
+  function goToStep(stepNum) {
+    if (stepNum > 1 && parsedQuestions.length === 0 && selectedFiles.length === 0 && stepNum !== 2) {
+      alert("Please upload at least one document or file first.");
+      return;
+    }
+
+    currentStep = stepNum;
+
+    document.querySelectorAll('.step-container').forEach(el => el.classList.add('hidden'));
+    const target = document.getElementById('step-container-' + stepNum);
+    if (target) target.classList.remove('hidden');
+
+    for (let i = 1; i <= 5; i++) {
+      const pill = document.getElementById('step-nav-' + i);
+      const badge = document.getElementById('step-badge-' + i);
+      if (!pill || !badge) continue;
+
+      pill.classList.remove('active', 'completed');
+      if (i === stepNum) {
+        pill.classList.add('active');
+        badge.className = "w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0";
+      } else if (i < stepNum) {
+        pill.classList.add('completed');
+        badge.className = "w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center justify-center shrink-0";
+        badge.innerHTML = "✓";
+      } else {
+        badge.className = "w-7 h-7 rounded-full bg-base-200 dark:bg-base-700 text-font-default-light dark:text-font-default-dark font-bold text-xs flex items-center justify-center shrink-0";
+        badge.innerText = i;
+      }
+    }
+
+    if (stepNum === 3) {
+      renderQuestionsReview();
+    } else if (stepNum === 4) {
+      calculateMarksDistribution();
+    } else if (stepNum === 5) {
+      renderStep5Preview();
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function toggleImportMode(val) {
+    const picker = document.getElementById('existing-series-picker');
+    if (val === 'existing') {
+      picker.classList.remove('hidden');
+      document.getElementById('publish-btn-text').innerText = "Commit Questions into Existing Series";
+    } else {
+      picker.classList.add('hidden');
+      document.getElementById('publish-btn-text').innerText = "Confirm & Publish Test Series";
+    }
+  }
+
+  function handleFilesSelected(files) {
+    if (!files || files.length === 0) return;
+    for (let i = 0; i < files.length; i++) {
+      selectedFiles.push(files[i]);
+    }
+    renderSelectedFilesList();
+  }
+
+  function renderSelectedFilesList() {
+    const container = document.getElementById('selected-files-list');
+    const btn = document.getElementById('btn-start-process');
+    container.innerHTML = '';
+
+    if (selectedFiles.length === 0) {
+      btn.disabled = true;
+      return;
+    }
+    btn.disabled = false;
+
+    selectedFiles.forEach((file, index) => {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      const ext = file.name.split('.').pop().toUpperCase();
+      const div = document.createElement('div');
+      div.className = "wizard-box flex items-center justify-between p-2.5 rounded-lg text-xs";
+      div.innerHTML = `
+        <div class="flex items-center gap-2 truncate">
+          <span class="px-2 py-0.5 rounded font-bold text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">${ext}</span>
+          <span class="font-semibold truncate wizard-heading">${file.name}</span>
+          <span class="wizard-subtext">(${sizeMB} MB)</span>
+        </div>
+        <button onclick="removeSelectedFile(${index})" class="text-rose-600 hover:text-rose-800 p-1 cursor-pointer">
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function removeSelectedFile(index) {
+    selectedFiles.splice(index, 1);
+    renderSelectedFilesList();
+  }
+
+  const dropZone = document.getElementById('drop-zone');
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropZone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-emerald-500');
+    }, false);
+  });
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-emerald-500');
+    }, false);
+  });
+  dropZone.addEventListener('drop', (e) => {
+    const dt = e.dataTransfer;
+    if (dt && dt.files && dt.files.length) {
+      handleFilesSelected(dt.files);
+    }
+  }, false);
+
+  async function startProcessing() {
+    if (selectedFiles.length === 0) return;
+
+    goToStep(2);
+
+    const formData = new FormData();
+    selectedFiles.forEach(file => {
+      formData.append('files', file);
+    });
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '{{ csrf_token }}';
+
+    let prog = 25;
+    const pBar = document.getElementById('pipeline-progress-bar');
+    const pPercent = document.getElementById('pipeline-progress-percent');
+
+    const interval = setInterval(() => {
+      if (prog < 85) {
+        prog += 15;
+        pBar.style.width = prog + '%';
+        pPercent.innerText = prog + '%';
+
+        if (prog >= 40) {
+          document.getElementById('engine-pdf').innerText = "Extracted ✓";
+          document.getElementById('engine-pdf').className = "col-span-2 text-right font-semibold text-emerald-600";
+          document.getElementById('engine-img').innerText = "Working...";
+          document.getElementById('engine-img').className = "col-span-2 text-right font-semibold text-blue-600";
+        }
+        if (prog >= 60) {
+          document.getElementById('engine-img').innerText = "Extracted ✓";
+          document.getElementById('engine-img').className = "col-span-2 text-right font-semibold text-emerald-600";
+          document.getElementById('engine-ocr').innerText = "Recognized ✓";
+          document.getElementById('engine-ocr').className = "col-span-2 text-right font-semibold text-emerald-600";
+          document.getElementById('engine-vision').innerText = "Normalizing...";
+          document.getElementById('engine-vision').className = "col-span-2 text-right font-semibold text-purple-600";
+        }
+        if (prog >= 80) {
+          document.getElementById('engine-vision').innerText = "Normalized ✓";
+          document.getElementById('engine-vision').className = "col-span-2 text-right font-semibold text-emerald-600";
+          document.getElementById('engine-parser').innerText = "Mapping...";
+          document.getElementById('engine-parser').className = "col-span-2 text-right font-semibold text-teal-600";
+        }
+      }
+    }, 400);
+
+    try {
+      const response = await fetch("{% url 'admin:assessments_bulk_import_parse' %}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken
+        },
+        body: formData
+      });
+
+      clearInterval(interval);
+      pBar.style.width = '100%';
+      pPercent.innerText = '100%';
+      document.getElementById('engine-parser').innerText = "Complete ✓";
+      document.getElementById('engine-parser').className = "col-span-2 text-right font-semibold text-emerald-600";
+
+      const data = await response.json();
+
+      if (data.success && data.questions) {
+        parsedQuestions = data.questions;
+        extractedImages = data.extracted_images || [];
+
+        if (data.title && !document.getElementById('conf-title').value) {
+          document.getElementById('conf-title').value = data.title;
+        }
+
+        setTimeout(() => {
+          goToStep(3);
+        }, 500);
+      } else {
+        alert("Parsing Error: " + (data.error || "Could not parse questions from document."));
+        goToStep(1);
+      }
+    } catch (err) {
+      clearInterval(interval);
+      alert("Upload failed: " + err.message);
+      goToStep(1);
+    }
+  }
+
+  function renderQuestionsReview() {
+    const list = document.getElementById('questions-review-list');
+    document.getElementById('badge-total-extracted').innerText = parsedQuestions.length + " Questions";
+    list.innerHTML = '';
+
+    if (parsedQuestions.length === 0) {
+      list.innerHTML = `<div class="p-8 text-center text-xs wizard-subtext">No questions extracted. Click "+ Add Question" to create one manually.</div>`;
+      return;
+    }
+
+    parsedQuestions.forEach((q, idx) => {
+      const card = document.createElement('div');
+      card.className = "wizard-card p-4 rounded-xl shadow-xs space-y-3";
+      card.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold text-xs flex items-center justify-center">
+              ${idx + 1}
+            </span>
+            <input type="text" value="${escapeHtml(q.subject || 'General')}" onchange="updateQuestionField(${idx}, 'subject', this.value)" class="wizard-input text-xs font-semibold px-2 py-0.5 rounded w-32" placeholder="Subject">
+            ${q.has_math ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300">LaTeX Math</span>' : ''}
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1 text-xs">
+              <span class="wizard-subtext">Marks:</span>
+              <input type="number" step="0.5" value="${q.marks || 1.0}" onchange="updateQuestionField(${idx}, 'marks', parseFloat(this.value))" class="wizard-input w-14 px-1.5 py-0.5 text-xs rounded text-center">
+            </div>
+            <div class="flex items-center gap-1 text-xs">
+              <span class="wizard-subtext">Neg:</span>
+              <input type="number" step="0.01" value="${q.negative_marks || 0.33}" onchange="updateQuestionField(${idx}, 'negative_marks', parseFloat(this.value))" class="wizard-input w-14 px-1.5 py-0.5 text-xs rounded text-center">
+            </div>
+            <button onclick="deleteQuestion(${idx})" class="text-rose-600 hover:text-rose-800 p-1 cursor-pointer">
+              <span class="material-symbols-outlined text-sm">delete</span>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-[11px] font-bold wizard-subtext block mb-1">Question Text (Supports LaTeX: $...$)</label>
+          <textarea rows="2" onchange="updateQuestionField(${idx}, 'question_en', this.value)" class="wizard-input w-full text-xs font-mono p-2 rounded">${escapeHtml(q.question_en || '')}</textarea>
+        </div>
+
+        ${q.image_url ? `
+          <div class="wizard-box flex items-center gap-3 p-2 rounded">
+            <img src="${q.image_url}" class="max-h-20 max-w-xs rounded object-contain border border-base-200 dark:border-base-700">
+            <div class="text-xs">
+              <span class="font-bold block wizard-heading">Attached Figure / Diagram</span>
+              <button onclick="removeQuestionImage(${idx})" class="text-rose-600 underline text-[11px] cursor-pointer">Remove Figure</button>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-emerald-700 dark:text-emerald-400 w-4">A:</span>
+            <input type="text" value="${escapeHtml(q.option_a_en || '')}" onchange="updateQuestionField(${idx}, 'option_a_en', this.value)" class="wizard-input w-full px-2 py-1 rounded">
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-emerald-700 dark:text-emerald-400 w-4">B:</span>
+            <input type="text" value="${escapeHtml(q.option_b_en || '')}" onchange="updateQuestionField(${idx}, 'option_b_en', this.value)" class="wizard-input w-full px-2 py-1 rounded">
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-emerald-700 dark:text-emerald-400 w-4">C:</span>
+            <input type="text" value="${escapeHtml(q.option_c_en || '')}" onchange="updateQuestionField(${idx}, 'option_c_en', this.value)" class="wizard-input w-full px-2 py-1 rounded">
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-emerald-700 dark:text-emerald-400 w-4">D:</span>
+            <input type="text" value="${escapeHtml(q.option_d_en || '')}" onchange="updateQuestionField(${idx}, 'option_d_en', this.value)" class="wizard-input w-full px-2 py-1 rounded">
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+          <div class="flex items-center gap-2 text-xs">
+            <span class="font-bold wizard-heading">Correct Option:</span>
+            <select onchange="updateQuestionField(${idx}, 'correct_option', this.value)" class="wizard-input font-bold px-2 py-1 rounded border-emerald-500">
+              <option value="A" ${q.correct_option === 'A' ? 'selected' : ''}>Option A</option>
+              <option value="B" ${q.correct_option === 'B' ? 'selected' : ''}>Option B</option>
+              <option value="C" ${q.correct_option === 'C' ? 'selected' : ''}>Option C</option>
+              <option value="D" ${q.correct_option === 'D' ? 'selected' : ''}>Option D</option>
+            </select>
+          </div>
+          <div class="flex-1 max-w-md">
+            <input type="text" value="${escapeHtml(q.explanation_en || '')}" onchange="updateQuestionField(${idx}, 'explanation_en', this.value)" class="wizard-input w-full text-xs px-2 py-1 rounded" placeholder="Explanation / Solution rationale">
+          </div>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+
+    if (window.renderMathInElement) {
+      window.renderMathInElement(list, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false }
+        ],
+        throwOnError: false
+      });
+    }
+  }
+
+  function updateQuestionField(idx, field, val) {
+    if (parsedQuestions[idx]) {
+      parsedQuestions[idx][field] = val;
+    }
+  }
+
+  function removeQuestionImage(idx) {
+    if (parsedQuestions[idx]) {
+      parsedQuestions[idx].image_url = null;
+      renderQuestionsReview();
+    }
+  }
+
+  function deleteQuestion(idx) {
+    parsedQuestions.splice(idx, 1);
+    renderQuestionsReview();
+  }
+
+  function addNewQuestionRow() {
+    parsedQuestions.push({
+      question_number: parsedQuestions.length + 1,
+      subject: 'General',
+      question_en: 'New question statement',
+      option_a_en: 'Option A',
+      option_b_en: 'Option B',
+      option_c_en: 'Option C',
+      option_d_en: 'Option D',
+      correct_option: 'A',
+      explanation_en: '',
+      marks: 1.0,
+      negative_marks: 0.33
+    });
+    renderQuestionsReview();
+  }
+
+  function saveAndProceedToStep4() {
+    if (parsedQuestions.length === 0) {
+      alert("Please add at least one question before proceeding.");
+      return;
+    }
+    goToStep(4);
+  }
+
+  function calculateMarksDistribution() {
+    const totalQ = parsedQuestions.length;
+    const strat = document.getElementById('conf-strategy').value;
+
+    let secAQ = 0;
+    let secBQ = 0;
+    let markA = 1.0;
+    let markB = 2.0;
+    let totalMarks = 0;
+
+    if (strat === 'balanced_50_50') {
+      secAQ = Math.ceil(totalQ / 2);
+      secBQ = totalQ - secAQ;
+      markA = 1.0;
+      markB = 2.0;
+      totalMarks = (secAQ * 1.0) + (secBQ * 2.0);
+
+      parsedQuestions.forEach((q, i) => {
+        if (i < secAQ) {
+          q.marks = 1.0;
+          q.negative_marks = 0.33;
+        } else {
+          q.marks = 2.0;
+          q.negative_marks = 0.66;
+        }
+      });
+    } else if (strat === 'standard_gate') {
+      secAQ = Math.min(30, totalQ);
+      secBQ = Math.max(0, totalQ - secAQ);
+      totalMarks = (secAQ * 1.0) + (secBQ * 2.0);
+      parsedQuestions.forEach((q, i) => {
+        if (i < secAQ) {
+          q.marks = 1.0;
+          q.negative_marks = 0.33;
+        } else {
+          q.marks = 2.0;
+          q.negative_marks = 0.66;
+        }
+      });
+    } else if (strat === 'all_1m') {
+      secAQ = totalQ;
+      secBQ = 0;
+      totalMarks = totalQ * 1.0;
+      parsedQuestions.forEach(q => {
+        q.marks = 1.0;
+        q.negative_marks = 0.33;
+      });
+    } else if (strat === 'all_2m') {
+      secAQ = 0;
+      secBQ = totalQ;
+      totalMarks = totalQ * 2.0;
+      parsedQuestions.forEach(q => {
+        q.marks = 2.0;
+        q.negative_marks = 0.66;
+      });
+    } else if (strat === 'all_4m') {
+      secAQ = totalQ;
+      secBQ = 0;
+      totalMarks = totalQ * 4.0;
+      parsedQuestions.forEach(q => {
+        q.marks = 4.0;
+        q.negative_marks = 1.0;
+      });
+    } else {
+      totalMarks = parsedQuestions.reduce((acc, q) => acc + (parseFloat(q.marks) || 1.0), 0);
+      secAQ = parsedQuestions.filter(q => (parseFloat(q.marks) || 1.0) <= 1.0).length;
+      secBQ = totalQ - secAQ;
+    }
+
+    document.getElementById('stat-total-q').innerText = totalQ;
+    document.getElementById('stat-sec-a-q').innerText = secAQ;
+    document.getElementById('stat-sec-b-q').innerText = secBQ;
+    document.getElementById('stat-total-marks').innerText = totalMarks.toFixed(2);
+
+    const pctA = totalQ > 0 ? Math.round((secAQ / totalQ) * 100) : 50;
+    const pctB = totalQ > 0 ? (100 - pctA) : 50;
+
+    document.getElementById('label-sec-a').innerText = `Section A (1-Mark): ${pctA}% (${secAQ} Qs)`;
+    document.getElementById('label-sec-b').innerText = `Section B (2-Mark): ${pctB}% (${secBQ} Qs)`;
+    document.getElementById('bar-sec-a').style.width = pctA + '%';
+    document.getElementById('bar-sec-b').style.width = pctB + '%';
+
+    document.getElementById('badge-mcq-count').innerText = totalQ;
+    document.getElementById('badge-msq-count').innerText = "0";
+    document.getElementById('badge-nat-count').innerText = "0";
+
+    document.getElementById('formula-breakdown-text').innerText =
+      `${secAQ} Questions × 1 Mark (${(secAQ * markA).toFixed(0)} M) + ${secBQ} Questions × 2 Marks (${(secBQ * markB).toFixed(0)} M) = ${totalMarks.toFixed(2)} Total Marks`;
+  }
+
+  function renderStep5Preview() {
+    const title = document.getElementById('conf-title').value || "GATE Mock Test Paper";
+    const discipline = document.getElementById('conf-discipline').value || "CH";
+    const duration = document.getElementById('conf-duration').value || "180";
+    const totalMarks = document.getElementById('stat-total-marks').innerText || "15.00";
+
+    document.getElementById('prev-title').innerText = title;
+    document.getElementById('prev-discipline').innerText = discipline;
+    document.getElementById('prev-duration-marks').innerText = `${duration} Mins • ${totalMarks} Total Marks`;
+    document.getElementById('prev-q-count').innerText = `${parsedQuestions.length} Questions`;
+
+    const container = document.getElementById('preview-questions-container');
+    container.innerHTML = '';
+
+    parsedQuestions.forEach((q, idx) => {
+      const qDiv = document.createElement('div');
+      qDiv.className = "wizard-card p-4 rounded-xl shadow-xs space-y-2 text-xs";
+      qDiv.innerHTML = `
+        <div class="flex items-center justify-between pb-1 border-b border-base-100 dark:border-base-800">
+          <strong class="text-sm font-bold wizard-heading">Question #${idx + 1} (${escapeHtml(q.subject || 'General')})</strong>
+          <span class="font-bold text-emerald-600">[+${q.marks || 1.0} M / -${q.negative_marks || 0.33} M]</span>
+        </div>
+        <p class="font-medium wizard-heading whitespace-pre-line">${escapeHtml(q.question_en || '')}</p>
+        ${q.image_url ? `<img src="${q.image_url}" class="max-h-40 max-w-md rounded my-2 border border-base-200 dark:border-base-700">` : ''}
+        <div class="grid grid-cols-2 gap-2 mt-2">
+          <div class="p-2 rounded border ${q.correct_option === 'A' ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/40 font-bold' : 'border-base-200 dark:border-base-800 wizard-box'}">
+            (A) ${escapeHtml(q.option_a_en || '')}
+          </div>
+          <div class="p-2 rounded border ${q.correct_option === 'B' ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/40 font-bold' : 'border-base-200 dark:border-base-800 wizard-box'}">
+            (B) ${escapeHtml(q.option_b_en || '')}
+          </div>
+          <div class="p-2 rounded border ${q.correct_option === 'C' ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/40 font-bold' : 'border-base-200 dark:border-base-800 wizard-box'}">
+            (C) ${escapeHtml(q.option_c_en || '')}
+          </div>
+          <div class="p-2 rounded border ${q.correct_option === 'D' ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/40 font-bold' : 'border-base-200 dark:border-base-800 wizard-box'}">
+            (D) ${escapeHtml(q.option_d_en || '')}
+          </div>
+        </div>
+        <div class="mt-2 wizard-subtext font-medium">
+          Correct Key: <strong class="text-emerald-600">Option (${q.correct_option || 'A'})</strong>
+          ${q.explanation_en ? `<span class="block mt-0.5 text-[11px]">Rationale: ${escapeHtml(q.explanation_en)}</span>` : ''}
+        </div>
+      `;
+      container.appendChild(qDiv);
+    });
+
+    if (window.renderMathInElement) {
+      window.renderMathInElement(container, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false }
+        ],
+        throwOnError: false
+      });
+    }
+  }
+
+  async function publishTestSeries() {
+    const btn = document.getElementById('btn-publish-test');
+    btn.disabled = true;
+    btn.innerHTML = `<span class="material-symbols-outlined text-lg animate-spin">progress_activity</span> Publishing...`;
+
+    const importMode = document.querySelector('input[name="import_mode"]:checked').value;
+    const existingTestId = document.getElementById('target_existing_test_id').value;
+
+    const payload = {
+      mode: importMode,
+      existing_test_id: existingTestId,
+      title: document.getElementById('conf-title').value.trim(),
+      discipline: document.getElementById('conf-discipline').value,
+      exam: `GATE (${document.getElementById('conf-discipline').value})`,
+      test_type: document.getElementById('conf-test-type').value,
+      package_id: document.getElementById('conf-package').value || null,
+      is_published: document.getElementById('conf-status').value === 'published',
+      visibility: document.getElementById('conf-visibility').value,
+      starts_at: document.getElementById('conf-start-date').value || null,
+      ends_at: document.getElementById('conf-end-date').value || null,
+      available_immediately: document.getElementById('conf-available-immediately').checked,
+      subject_name: document.getElementById('conf-subject').value.trim(),
+      topic_name: document.getElementById('conf-topic').value.trim(),
+      duration_minutes: parseInt(document.getElementById('conf-duration').value || 180),
+      language: document.getElementById('conf-language').value,
+      instructions: document.getElementById('conf-instructions').value.trim(),
+      questions: parsedQuestions
+    };
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '{{ csrf_token }}';
+
+    try {
+      const response = await fetch("{% url 'admin:assessments_bulk_import_publish' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const res = await response.json();
+      if (res.success && res.redirect_url) {
+        window.location.href = res.redirect_url;
+      } else {
+        alert("Publish Failed: " + (res.error || "Unknown server error"));
+        btn.disabled = false;
+        btn.innerHTML = `<span class="material-symbols-outlined text-lg">rocket_launch</span> Confirm & Publish Test Series`;
+      }
+    } catch (e) {
+      alert("Publication Network Error: " + e.message);
+      btn.disabled = false;
+      btn.innerHTML = `<span class="material-symbols-outlined text-lg">rocket_launch</span> Confirm & Publish Test Series`;
+    }
+  }
+
+  // ── Theme Manager ──────────────────────────────────────
+  function initTheme() {
+    const saved = localStorage.getItem('adminTheme') || 
+                  (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(saved);
+  }
+
+  function applyTheme(theme) {
+    const isDark = theme === 'dark';
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.body.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.body.classList.remove('dark');
+    }
+    document.querySelectorAll('.theme-icon').forEach(icon => {
+      icon.textContent = isDark ? 'light_mode' : 'dark_mode';
+    });
+    document.querySelectorAll('.theme-label').forEach(label => {
+      label.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+    });
+  }
+
+  function toggleTheme() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const newTheme = isDark ? 'light' : 'dark';
+    localStorage.setItem('adminTheme', newTheme);
+    localStorage.setItem('_x_adminTheme', JSON.stringify(newTheme));
+    applyTheme(newTheme);
+  }
+
+  initTheme();
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+</script>
+{% endblock %}

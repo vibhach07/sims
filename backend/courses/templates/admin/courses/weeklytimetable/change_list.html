@@ -1,0 +1,11 @@
+{% extends 'admin/change_list.html' %}
+
+{% block object-tools-items %}
+  <li>
+    <a href="{% url 'admin:courses_weeklytimetable_matrix' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-default bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-sm transition-colors">
+      <span class="material-symbols-outlined text-sm text-amber-400">bolt</span>
+      <span>⚡ Create / Edit Weekly Timetable Matrix</span>
+    </a>
+  </li>
+  {{ block.super }}
+{% endblock %}

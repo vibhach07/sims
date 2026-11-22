@@ -1,0 +1,199 @@
+{% extends 'admin/base.html' %}
+{% load i18n admin_urls static %}
+
+{% block title %}Bulk Import Questions | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-6 max-w-5xl mx-auto w-full">
+
+  <!-- Header Card -->
+  <div class="bg-white dark:bg-base-900 border border-base-200 dark:border-base-800 rounded-default p-6 shadow-xs flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="material-symbols-outlined text-primary-600 dark:text-primary-500 text-3xl">upload_file</span>
+      <div>
+        <h1 class="text-xl font-bold text-font-important-light dark:text-font-important-dark">
+          Bulk Question Import
+        </h1>
+        <p class="text-xs text-font-subtle-light dark:text-font-subtle-dark mt-1">
+          Batch ingest multiple-choice test questions from CSV, XLSX, DOCX, or PDF documents into mock exam test series.
+        </p>
+      </div>
+    </div>
+    <div>
+      <a href="{% url 'admin:assessments_bulk_import_wizard' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs">
+        <span class="material-symbols-outlined text-sm">auto_awesome</span>
+        Open 5-Step Wizard (CBT / LaTeX / Crop)
+      </a>
+    </div>
+  </div>
+
+  <!-- Instruction Box -->
+  <div class="bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/40 rounded-default p-4 text-xs text-font-default-light dark:text-font-default-dark">
+    <strong class="text-primary-800 dark:text-primary-300 block mb-1">Supported Ingestion Formats:</strong>
+    <ul class="list-disc list-inside space-y-1 text-font-subtle-light dark:text-font-subtle-dark">
+      <li><strong>CSV / XLSX:</strong> Standard spreadsheet columns (Question, Option A, Option B, Option C, Option D, Correct Answer, Explanation, Marks).</li>
+      <li><strong>Word (.docx):</strong> Questions formatted with Q1., options (A)-(D) or (1)-(4), Answer: B (or (2)), and Solution.</li>
+      <li><strong>PDF:</strong> Text-based selectable PDFs and multi-page scanned documents (OCR fallback enabled).</li>
+      <li><strong>Images & Photos (OCR):</strong> PNG, JPG, JPEG, WEBP scanned test papers parsed automatically via OCR.</li>
+      <li><strong>Text & JSON:</strong> .txt question papers and structured JSON exports.</li>
+    </ul>
+  </div>
+
+  {% if preview_data %}
+    <!-- STAGE 1: VALIDATION & PREVIEW CARD -->
+    <div class="bg-white dark:bg-base-900 border border-base-200 dark:border-base-800 rounded-default p-6 shadow-xs space-y-5">
+      <div class="flex items-center justify-between pb-3 border-b border-base-200 dark:border-base-800">
+        <h2 class="text-base font-bold text-font-important-light dark:text-font-important-dark flex items-center gap-2">
+          <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">visibility</span>
+          Stage 1: Import Validation & Preview (No Records Created Yet)
+        </h2>
+        <span class="text-xs text-font-subtle-light dark:text-font-subtle-dark">
+          Target: <strong class="text-font-important-light dark:text-font-important-dark">{{ target_test.title }}</strong>
+        </span>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4">
+        <div class="p-4 rounded-default bg-base-50 dark:bg-base-800/50 border border-base-200 dark:border-base-700 text-center">
+          <span class="text-xs text-font-subtle-light dark:text-font-subtle-dark block mb-1">Total Extracted</span>
+          <span class="text-2xl font-bold text-font-important-light dark:text-font-important-dark">{{ preview_data.total_rows }}</span>
+        </div>
+        <div class="p-4 rounded-default bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 text-center">
+          <span class="text-xs text-emerald-700 dark:text-emerald-400 block mb-1">Valid Questions</span>
+          <span class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ preview_data.valid_count }}</span>
+        </div>
+        <div class="p-4 rounded-default {% if preview_data.invalid_count > 0 %}bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40{% else %}bg-base-50 dark:bg-base-800/50 border border-base-200 dark:border-base-700{% endif %} text-center">
+          <span class="text-xs {% if preview_data.invalid_count > 0 %}text-rose-700 dark:text-rose-400{% else %}text-font-subtle-light dark:text-font-subtle-dark{% endif %} block mb-1">Invalid Rows</span>
+          <span class="text-2xl font-bold {% if preview_data.invalid_count > 0 %}text-rose-600 dark:text-rose-400{% else %}text-font-subtle-light dark:text-font-subtle-dark{% endif %}">{{ preview_data.invalid_count }}</span>
+        </div>
+      </div>
+
+      {% if preview_data.errors %}
+        <div class="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 rounded-default text-xs space-y-3">
+          <div class="flex items-center gap-2 text-rose-700 dark:text-rose-400 font-bold">
+            <span class="material-symbols-outlined text-sm">error</span>
+            <span>Parsing & Validation Errors Detected (Fix before import):</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse border border-rose-200 dark:border-rose-800/50">
+              <thead>
+                <tr class="bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-200">
+                  <th class="p-2 border border-rose-200 dark:border-rose-800">Row</th>
+                  <th class="p-2 border border-rose-200 dark:border-rose-800">Snippet</th>
+                  <th class="p-2 border border-rose-200 dark:border-rose-800">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for err in preview_data.errors %}
+                  <tr class="text-rose-900 dark:text-rose-300">
+                    <td class="p-2 border border-rose-200 dark:border-rose-800 font-mono font-bold">{{ err.row }}</td>
+                    <td class="p-2 border border-rose-200 dark:border-rose-800">{{ err.question }}</td>
+                    <td class="p-2 border border-rose-200 dark:border-rose-800 font-semibold">{{ err.errors|join:", " }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if preview_data.valid_count > 0 and preview_data.invalid_count == 0 %}
+        <!-- SAMPLE PREVIEW TABLE -->
+        <div class="space-y-2">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-font-subtle-light dark:text-font-subtle-dark">Preview Valid Rows (First 10):</h3>
+          <div class="overflow-x-auto border border-base-200 dark:border-base-800 rounded-default">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-base-100 dark:bg-base-800 text-font-important-light dark:text-font-important-dark">
+                <tr>
+                  <th class="p-2.5">#</th>
+                  <th class="p-2.5">Subject</th>
+                  <th class="p-2.5">Question</th>
+                  <th class="p-2.5">Options</th>
+                  <th class="p-2.5">Correct</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-base-200 dark:divide-base-800">
+                {% for q in preview_data.preview_questions %}
+                  <tr class="hover:bg-base-50 dark:hover:bg-base-800/50">
+                    <td class="p-2.5 font-bold">{{ forloop.counter }}</td>
+                    <td class="p-2.5">{{ q.subject }}</td>
+                    <td class="p-2.5 font-medium">{{ q.question_en }}</td>
+                    <td class="p-2.5 text-[11px] text-font-subtle-light dark:text-font-subtle-dark">
+                      A: {{ q.option_a_en }} | B: {{ q.option_b_en }}<br>
+                      C: {{ q.option_c_en }} | D: {{ q.option_d_en }}
+                    </td>
+                    <td class="p-2.5 font-bold text-primary-600 dark:text-primary-400">Opt {{ q.correct_option }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- COMMIT FORM -->
+        <form method="post" class="pt-3">
+          {% csrf_token %}
+          <input type="hidden" name="action_type" value="confirm">
+          <input type="hidden" name="test_series_id" value="{{ target_test.id }}">
+          <input type="hidden" name="serialized_valid_rows" value="{{ serialized_valid_rows }}">
+          <div class="flex items-center gap-3">
+            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-default bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition cursor-pointer">
+              <span class="material-symbols-outlined text-sm">check_circle</span>
+              <span>Confirm & Commit {{ preview_data.valid_count }} Questions</span>
+            </button>
+            <a href="{% url 'admin:assessments_bulk_import' %}" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-default border border-base-300 dark:border-base-700 hover:bg-base-100 dark:hover:bg-base-800 text-xs font-semibold">
+              Cancel / New File
+            </a>
+          </div>
+        </form>
+      {% else %}
+        <div class="pt-2">
+          <a href="{% url 'admin:assessments_bulk_import' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-default border border-base-300 dark:border-base-700 hover:bg-base-100 text-xs font-semibold">
+            &larr; Back to Upload
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+  {% else %}
+    <!-- STAGE 0: UPLOAD FORM -->
+    <div class="bg-white dark:bg-base-900 border border-base-200 dark:border-base-800 rounded-default p-6 shadow-xs">
+      <form method="post" enctype="multipart/form-data" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="action_type" value="preview">
+
+        <div class="space-y-1">
+          <label for="test_series_id" class="text-xs font-bold text-font-important-light dark:text-font-important-dark block">
+            Select Target Test Series *
+          </label>
+          <select name="test_series_id" id="test_series_id" required class="w-full max-w-xl text-sm border border-base-300 dark:border-base-700 rounded-default p-2.5 bg-white dark:bg-base-900 text-font-default-light dark:text-font-default-dark">
+            <option value="">-- Choose exam target --</option>
+            {% for ts in test_series_list %}
+              <option value="{{ ts.id }}">
+                {{ ts.title }} ({{ ts.exam }}) — Current Questions: {{ ts.questions_count }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="space-y-1">
+          <label for="import_file" class="text-xs font-bold text-font-important-light dark:text-font-important-dark block">
+            Question Document or Scanned Image File (.csv, .xlsx, .docx, .pdf, .txt, .json, .png, .jpg) *
+          </label>
+          <input type="file" name="file" id="import_file" required accept=".csv,.xlsx,.xls,.docx,.doc,.pdf,.txt,.json,.png,.jpg,.jpeg,.webp" class="w-full max-w-xl text-sm border border-base-300 dark:border-base-700 rounded-default p-2 bg-white dark:bg-base-900 text-font-default-light dark:text-font-default-dark">
+          <span class="text-[11px] text-font-subtle-light dark:text-font-subtle-dark block">No file size limit. Supports large multi-page scans, PDFs, and high-res documents.</span>
+        </div>
+
+        <div class="flex items-center gap-3 pt-3">
+          <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-default bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs shadow-xs transition cursor-pointer">
+            <span class="material-symbols-outlined text-sm">search</span>
+            <span>Validate & Preview Document</span>
+          </button>
+          <a href="{% url 'admin:assessments_testquestion_changelist' %}" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-default border border-base-300 dark:border-base-700 hover:bg-base-100 text-xs font-semibold">
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

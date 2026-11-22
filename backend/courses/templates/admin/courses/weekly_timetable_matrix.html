@@ -1,0 +1,530 @@
+{% extends 'unfold/layouts/base.html' %}
+{% load static %}
+
+{% block title %}Weekly Timetable Matrix | SIMS Raipur Admin{% endblock %}
+
+{% block breadcrumbs %}
+<div style="background:#1a2035;border-bottom:1px solid #2e3a55;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;">
+  <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#8fa0bf;">
+    <a href="{% url 'admin:index' %}" style="color:#8fa0bf;text-decoration:none;">Home</a>
+    <span>›</span>
+    <a href="{% url 'admin:courses_weeklytimetable_changelist' %}" style="color:#8fa0bf;text-decoration:none;">Weekly Timetable</a>
+    <span>›</span>
+    <span style="color:#e2e8f0;font-weight:600;">Matrix Editor</span>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+  /* ── Reset & Base ── */
+  .mx-wrap { background:#f0f2f7; min-height:100vh; padding:0; font-family:'Inter',system-ui,sans-serif; }
+
+  /* ── Top Banner Header ── */
+  .mx-banner {
+    background: linear-gradient(135deg, #1a2035 0%, #243050 100%);
+    padding: 18px 28px 14px;
+    border-bottom: 1px solid #2e3a55;
+  }
+  .mx-banner-title {
+    font-size:20px; font-weight:700; color:#ffffff; display:flex; align-items:center; gap:8px; margin-bottom:4px;
+  }
+  .mx-banner-title .lightning { color:#d4a017; }
+  .mx-banner-sub { font-size:12px; color:#8fa0bf; margin-bottom:14px; }
+
+  /* Step controls row */
+  .mx-controls-row {
+    display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap;
+  }
+  .mx-step-block { display:flex; flex-direction:column; gap:4px; }
+  .mx-step-label {
+    font-size:10px; font-weight:700; color:#d4a017; letter-spacing:.08em; text-transform:uppercase;
+  }
+  .mx-step-label span { color:#8fa0bf; font-weight:400; }
+  .mx-select, .mx-input {
+    background:#0f1626; border:1px solid #2e3a55; color:#e2e8f0;
+    border-radius:6px; padding:7px 10px; font-size:13px; outline:none;
+    transition: border-color .2s;
+  }
+  .mx-select:focus, .mx-input:focus { border-color:#d4a017; }
+  .mx-select { min-width:220px; cursor:pointer; }
+  .mx-input-date { width:160px; }
+  .mx-input-week { width:70px; text-align:center; }
+
+  /* Calculated week badge */
+  .mx-week-badge {
+    background:#d4a017; color:#1a1a00; font-size:12px; font-weight:700;
+    padding:7px 14px; border-radius:6px; white-space:nowrap; letter-spacing:.02em;
+  }
+
+  /* ── Quick Actions Bar ── */
+  .mx-actions-bar {
+    background:#ffffff; border-bottom:1px solid #dde2ed;
+    padding:10px 28px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  }
+  .mx-actions-label { font-size:11px; font-weight:700; color:#8fa0bf; letter-spacing:.06em; text-transform:uppercase; margin-right:4px; }
+  .mx-btn {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:7px 14px; border-radius:6px; font-size:12px; font-weight:600;
+    cursor:pointer; border:1.5px solid; transition:all .15s; text-decoration:none;
+  }
+  .mx-btn-amber { background:#fffbeb; border-color:#d4a017; color:#92400e; }
+  .mx-btn-amber:hover { background:#fef3c7; }
+  .mx-btn-blue { background:#eff6ff; border-color:#3b82f6; color:#1d4ed8; }
+  .mx-btn-blue:hover { background:#dbeafe; }
+  .mx-btn-ghost { background:#f8fafc; border-color:#cbd5e1; color:#475569; }
+  .mx-btn-ghost:hover { background:#e2e8f0; }
+
+  /* ── Matrix Table ── */
+  .mx-table-wrap {
+    padding: 20px 28px;
+  }
+  .mx-table-card {
+    background:#ffffff; border:1px solid #dde2ed; border-radius:10px;
+    overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.06);
+  }
+  .mx-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+
+  /* Header row */
+  .mx-table thead tr { background:#1a2035; }
+  .mx-th {
+    padding:12px 10px; text-align:center; color:#8fa0bf;
+    font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    border-right:1px solid #2e3a55;
+  }
+  .mx-th:last-child { border-right:none; }
+  .mx-th-timeslot { width:140px; text-align:left; padding-left:16px; }
+  .mx-th-day-name { color:#e2e8f0; font-size:13px; font-weight:800; display:block; }
+  .mx-th-day-date { color:#d4a017; font-size:11px; font-weight:600; display:block; margin-top:2px; }
+
+  /* Body rows */
+  .mx-table tbody tr { border-bottom:1px solid #eef0f5; }
+  .mx-table tbody tr:last-child { border-bottom:none; }
+
+  /* Slot label cell (left column) */
+  .mx-slot-label-td {
+    background:#1a2035; padding:16px 14px; vertical-align:middle;
+    border-right:1px solid #2e3a55;
+  }
+  .mx-slot-name {
+    font-size:11px; font-weight:800; color:#d4a017; letter-spacing:.06em;
+    text-transform:uppercase; margin-bottom:4px;
+  }
+  .mx-slot-time-label {
+    font-size:10px; color:#8fa0bf; white-space:nowrap;
+  }
+
+  /* Data cell */
+  .mx-cell {
+    padding:10px 8px; vertical-align:top; border-right:1px solid #eef0f5;
+    background:#ffffff;
+  }
+  .mx-cell:last-child { border-right:none; }
+
+  /* Amber time badge in cell */
+  .mx-time-badge {
+    background:#fffbeb; border:1px solid #fde68a; color:#92400e;
+    font-size:10px; font-weight:700; padding:3px 8px; border-radius:4px;
+    margin-bottom:7px; display:inline-block; letter-spacing:.02em;
+  }
+
+  /* Subject input */
+  .mx-subj-input {
+    width:100%; border:1.5px solid #e2e8f0; border-radius:6px;
+    padding:7px 9px; font-size:12px; color:#1f2937;
+    background:#f9fafb; outline:none; transition:border-color .2s, background .2s;
+    box-sizing:border-box; margin-bottom:6px;
+  }
+  .mx-subj-input:focus { border-color:#d4a017; background:#fff; }
+  .mx-subj-input::placeholder { color:#9ca3af; }
+
+  /* Faculty select */
+  .mx-fac-select {
+    width:100%; border:1px solid #e2e8f0; border-radius:5px;
+    padding:5px 7px; font-size:11px; color:#374151;
+    background:#ffffff; outline:none; cursor:pointer;
+    box-sizing:border-box;
+  }
+  .mx-fac-select:focus { border-color:#3b82f6; }
+
+  /* ── Footer Bar ── */
+  .mx-footer {
+    background:#f8fafc; border-top:1px solid #dde2ed;
+    padding:14px 28px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+  }
+  .mx-tip { font-size:12px; color:#6b7280; display:flex; align-items:center; gap:5px; }
+  .mx-tip-icon { color:#d4a017; }
+  .mx-btn-publish {
+    display:inline-flex; align-items:center; gap:7px;
+    background:#1a2035; color:#ffffff;
+    padding:10px 22px; border-radius:7px; font-size:13px; font-weight:700;
+    cursor:pointer; border:none; transition:background .2s;
+  }
+  .mx-btn-publish:hover { background:#243050; }
+  .mx-btn-publish:disabled { opacity:.6; cursor:not-allowed; }
+  .mx-btn-cancel {
+    background:transparent; border:1.5px solid #cbd5e1; color:#374151;
+    padding:9px 18px; border-radius:7px; font-size:13px; font-weight:600;
+    cursor:pointer; transition:background .2s;
+  }
+  .mx-btn-cancel:hover { background:#e2e8f0; }
+
+  /* Toast */
+  #mx-toast-wrap {
+    position:fixed; bottom:28px; right:28px; z-index:9999;
+    display:flex; flex-direction:column; gap:8px; pointer-events:none;
+  }
+  .mx-toast {
+    display:flex; align-items:center; gap:8px;
+    padding:11px 18px; border-radius:8px; font-size:13px; font-weight:600;
+    color:#fff; box-shadow:0 4px 16px rgba(0,0,0,.18);
+    transform:translateY(8px); opacity:0; transition:all .25s ease;
+    pointer-events:auto;
+  }
+  .mx-toast.show { transform:translateY(0); opacity:1; }
+  .mx-toast-success { background:#059669; }
+  .mx-toast-error   { background:#dc2626; }
+  .mx-toast-warning { background:#d97706; }
+  .mx-toast-info    { background:#2563eb; }
+
+  /* Spin animation */
+  @keyframes mx-spin { to { transform:rotate(360deg); } }
+  .mx-spin { display:inline-block; animation:mx-spin .8s linear infinite; }
+</style>
+
+<div class="mx-wrap">
+
+  <!-- ── Banner Header ── -->
+  <div class="mx-banner">
+    <div class="mx-banner-title">
+      <span class="lightning">⚡</span> Create / Edit Weekly Timetable Matrix
+    </div>
+    <div class="mx-banner-sub">Step 1: Pick Branch &amp; Start Date. &nbsp;Step 2: Type Subjects into the Mon–Sat Matrix.</div>
+
+    <!-- Controls row -->
+    <div class="mx-controls-row">
+      <!-- 1. Branch -->
+      <div class="mx-step-block">
+        <div class="mx-step-label">1. Select Branch</div>
+        <select id="branchSelector" class="mx-select">
+          {% for b in branches %}
+          <option value="{{ b }}" {% if b == selected_branch %}selected{% endif %}>{{ b }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- 2. Start Date -->
+      <div class="mx-step-block">
+        <div class="mx-step-label">2. Start Date <span>(Monday)</span></div>
+        <input type="date" id="startDateInput" class="mx-input mx-input-date" value="{{ start_date }}">
+      </div>
+
+      <!-- Week No -->
+      <div class="mx-step-block">
+        <div class="mx-step-label">Week No:</div>
+        <input type="number" id="weekNumberInput" class="mx-input mx-input-week" value="{{ week_number }}" min="1" max="52">
+      </div>
+
+      <!-- Calculated week badge -->
+      <div class="mx-step-block">
+        <div class="mx-step-label">Calculated Week (Mon–Sat)</div>
+        <div id="weekRangeBadge" class="mx-week-badge">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Quick Actions Bar ── -->
+  <div class="mx-actions-bar">
+    <span class="mx-actions-label">Quick Actions:</span>
+    <button class="mx-btn mx-btn-amber" onclick="autoFillSchedule()">
+      ⚡ Auto-Fill Default Schedule for this Branch
+    </button>
+    <button class="mx-btn mx-btn-blue" onclick="loadSavedSchedule()">
+      🗄 Load Saved Schedule from Database
+    </button>
+    <button class="mx-btn mx-btn-ghost" onclick="clearAllSubjects()">
+      ✕ Clear All Subjects
+    </button>
+  </div>
+
+  <!-- ── Matrix Table ── -->
+  <div class="mx-table-wrap">
+    <div class="mx-table-card">
+      <table class="mx-table">
+        <thead>
+          <tr>
+            <th class="mx-th mx-th-timeslot">TIME SLOT</th>
+            {% for day in days %}
+            <th class="mx-th">
+              <span class="mx-th-day-name">{{ day|upper }}</span>
+              <span class="mx-th-day-date" id="col_date_{{ day }}"></span>
+            </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for slot in slot_defs %}
+          <tr>
+            <!-- Slot label -->
+            <td class="mx-slot-label-td">
+              <div class="mx-slot-name">{{ slot.display_name }}</div>
+              <div class="mx-slot-time-label">{{ slot.time_range }}</div>
+            </td>
+            <!-- Day cells -->
+            {% for day in days %}
+            <td class="mx-cell">
+              <div class="mx-time-badge">{{ slot.time_range }}</div>
+              <input
+                type="text"
+                id="slot_{{ slot.key }}_{{ day }}_subject"
+                class="mx-subj-input"
+                placeholder="Enter Subject Name..."
+                autocomplete="off"
+              >
+              <select id="slot_{{ slot.key }}_{{ day }}_faculty" class="mx-fac-select">
+                <option value="">— Select Faculty —</option>
+                {% for f in faculty_members %}
+                <option value="{{ f.id }}">{{ f.name }}</option>
+                {% endfor %}
+              </select>
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <div class="mx-footer">
+    <div class="mx-tip">
+      <span class="mx-tip-icon">💡</span>
+      Tip: Click <strong>"Auto-Fill Default Schedule"</strong> to instantly load standard subjects, then edit as needed.
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <a href="{% url 'admin:courses_weeklytimetable_changelist' %}" class="mx-btn-cancel">Cancel</a>
+      <button id="pushBtn" class="mx-btn-publish" onclick="pushTimetableToDatabase()">
+        🚀 Push &amp; Publish Timetable to Database
+      </button>
+    </div>
+  </div>
+
+</div><!-- /mx-wrap -->
+
+<!-- Toast container -->
+<div id="mx-toast-wrap"></div>
+
+<script>
+  const CSRF_TOKEN = '{{ csrf_token }}';
+  const DEFAULT_FACULTY_ID = "{{ default_faculty_id }}";
+  const DAYS = ['mon','tue','wed','thu','fri','sat'];
+
+  // ── Slot definitions (key must match matrix_data keys) ──
+  const SLOTS = [
+    { key: 'morning',   display: 'MORNING CORE',     time: '07:30 AM – 10:30 AM' },
+    { key: 'afternoon', display: 'CORE TRACK',        time: '11:00 AM – 02:00 PM' },
+    { key: 'evening',   display: 'SPECIAL / CBT TEST', time: '03:00 PM – 06:00 PM' },
+  ];
+
+  // ── Branch default subjects ──
+  const BRANCH_DEFAULTS = {
+    'Chemical Engineering (CH)': {
+      morning:   ['Thermodynamics','Thermodynamics','Mass Transfer','Heat Transfer','Reaction Engg','Chemical Tech'],
+      afternoon: ['Fluid Mechanics','Mass Transfer','Thermodynamics','Fluid Mechanics','Heat Transfer','Mass Transfer'],
+      evening:   ['CBT Practice','CBT Practice','CBT Practice','CBT Practice','CBT Practice','Mock Test'],
+    },
+    'Computer Science & Engineering (CS)': {
+      morning:   ['Data Structures','Algorithms','OS','DBMS','Networks','Compiler Design'],
+      afternoon: ['COA','TOC','Software Engg','Digital Logic','Algorithms','Data Structures'],
+      evening:   ['CBT Practice','CBT Practice','CBT Practice','CBT Practice','CBT Practice','Mock Test'],
+    },
+    'Mechanical Engineering (ME)': {
+      morning:   ['Thermodynamics','SOM','Fluid Mechanics','HMT','Machine Design','Manufacturing'],
+      afternoon: ['Theory of Machines','Engg Mechanics','Fluid Mechanics','Thermodynamics','Manufacturing','SOM'],
+      evening:   ['CBT Practice','CBT Practice','CBT Practice','CBT Practice','CBT Practice','Mock Test'],
+    },
+    'Civil Engineering (CE)': {
+      morning:   ['Structural Analysis','SOM','Fluid Mechanics','Geotechnical','Transportation','Environmental'],
+      afternoon: ['RCC Design','SOM','Surveying','Water Resources','Structural Analysis','RCC Design'],
+      evening:   ['CBT Practice','CBT Practice','CBT Practice','CBT Practice','CBT Practice','Mock Test'],
+    },
+    'Electrical Engineering (EE)': {
+      morning:   ['Circuit Theory','Machines','Power Systems','Control Systems','EMF','Power Electronics'],
+      afternoon: ['Signals & Systems','Machines','Power Systems','Measurement','Circuit Theory','Signals & Systems'],
+      evening:   ['CBT Practice','CBT Practice','CBT Practice','CBT Practice','CBT Practice','Mock Test'],
+    },
+    'CSIR-NET Chemical Sciences': {
+      morning:   ['Organic Chemistry','Inorganic Chemistry','Physical Chemistry','Spectroscopy','Organic Chemistry','Inorganic Chemistry'],
+      afternoon: ['Physical Chemistry','Spectroscopy','Organic Chemistry','Physical Chemistry','Inorganic Chemistry','Physical Chemistry'],
+      evening:   ['CBT Practice','CBT Practice','CBT Practice','CBT Practice','CBT Practice','Mock Test'],
+    },
+  };
+
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // ── Update column date headers ──
+  function updateDateHeaders() {
+    const val = document.getElementById('startDateInput').value;
+    if (!val) return;
+    const d = new Date(val + 'T00:00:00');
+    DAYS.forEach((day, i) => {
+      const cell = document.getElementById('col_date_' + day);
+      const nd = new Date(d);
+      nd.setDate(d.getDate() + i);
+      if (cell) cell.textContent = MONTHS[nd.getMonth()] + ' ' + nd.getDate();
+    });
+    // Update badge
+    const end = new Date(d);
+    end.setDate(d.getDate() + 5);
+    const badge = document.getElementById('weekRangeBadge');
+    if (badge) {
+      badge.textContent = `${MONTHS[d.getMonth()]} ${d.getDate()} – ${MONTHS[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
+    }
+  }
+
+  // ── Auto-fill defaults ──
+  function autoFillSchedule() {
+    const branch = document.getElementById('branchSelector').value;
+    const data = BRANCH_DEFAULTS[branch] || BRANCH_DEFAULTS['Chemical Engineering (CH)'];
+    SLOTS.forEach(slot => {
+      const subjects = data[slot.key] || [];
+      DAYS.forEach((day, i) => {
+        const inp = document.getElementById(`slot_${slot.key}_${day}_subject`);
+        if (inp && subjects[i]) inp.value = subjects[i];
+        const fac = document.getElementById(`slot_${slot.key}_${day}_faculty`);
+        if (fac && DEFAULT_FACULTY_ID && !fac.value) fac.value = DEFAULT_FACULTY_ID;
+      });
+    });
+    toast(`Auto-filled default schedule for "${branch}"`, 'success');
+  }
+
+  // ── Clear ──
+  function clearAllSubjects() {
+    SLOTS.forEach(slot => {
+      DAYS.forEach(day => {
+        const inp = document.getElementById(`slot_${slot.key}_${day}_subject`);
+        if (inp) inp.value = '';
+      });
+    });
+    toast('Cleared all subjects.', 'info');
+  }
+
+  // ── Load saved schedule from DB ──
+  async function loadSavedSchedule() {
+    const branch = document.getElementById('branchSelector').value;
+    const startDate = document.getElementById('startDateInput').value;
+    try {
+      const r = await fetch(`{% url 'admin:courses_weeklytimetable_load_matrix' %}?branch=${encodeURIComponent(branch)}&start_date=${encodeURIComponent(startDate)}`);
+      const d = await r.json();
+      if (d.success && d.matrix_data) {
+        populateMatrix(d.matrix_data);
+        if (d.week_number) document.getElementById('weekNumberInput').value = d.week_number;
+        toast(`Loaded saved schedule for "${branch}" (Week ${d.week_number || 1})`, 'success');
+      } else {
+        toast(`No saved schedule found for "${branch}". Auto-filling defaults…`, 'warning');
+        autoFillSchedule();
+      }
+    } catch(e) {
+      toast('Error loading: ' + e.message, 'error');
+    }
+  }
+
+  // ── Populate matrix from JSON ──
+  function populateMatrix(matrix) {
+    SLOTS.forEach(slot => {
+      const slotData = matrix[slot.key];
+      if (!slotData) return;
+      DAYS.forEach(day => {
+        const cell = slotData[day];
+        if (!cell) return;
+        const inp = document.getElementById(`slot_${slot.key}_${day}_subject`);
+        if (inp) inp.value = cell.subject || '';
+        const fac = document.getElementById(`slot_${slot.key}_${day}_faculty`);
+        if (fac && cell.faculty_id) fac.value = cell.faculty_id;
+      });
+    });
+  }
+
+  // ── Push & Publish ──
+  async function pushTimetableToDatabase() {
+    const btn = document.getElementById('pushBtn');
+    const branch = document.getElementById('branchSelector').value;
+    const startDate = document.getElementById('startDateInput').value;
+    const weekNumber = parseInt(document.getElementById('weekNumberInput').value) || 1;
+
+    if (!startDate) { toast('Please select a valid start date (Monday).', 'error'); return; }
+
+    const payload = {};
+    let filled = 0;
+    SLOTS.forEach(slot => {
+      payload[slot.key] = {};
+      DAYS.forEach(day => {
+        const subj = document.getElementById(`slot_${slot.key}_${day}_subject`)?.value.trim() || '';
+        const facEl = document.getElementById(`slot_${slot.key}_${day}_faculty`);
+        const facId = facEl?.value || null;
+        const facName = facEl?.selectedOptions[0]?.text || '';
+        if (subj) filled++;
+        payload[slot.key][day] = {
+          subject: subj,
+          faculty_id: facId,
+          faculty_name: facName,
+          // Include display metadata so frontend can render without extra config
+          slot_display: slot.display,
+          slot_time: slot.time,
+        };
+      });
+    });
+
+    if (filled === 0) { toast('Enter at least one subject before publishing.', 'warning'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="mx-spin">↻</span> Publishing…';
+
+    try {
+      const r = await fetch('{% url "admin:courses_weeklytimetable_save_matrix" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+        body: JSON.stringify({ branch, start_date: startDate, week_number: weekNumber, matrix_data: payload })
+      });
+      const res = await r.json();
+      if (res.success) {
+        toast('🚀 Timetable published to database & live on frontend!', 'success');
+      } else {
+        toast('Save error: ' + (res.error || 'Unknown'), 'error');
+      }
+    } catch(err) {
+      toast('Network error: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '🚀 Push &amp; Publish Timetable to Database';
+    }
+  }
+
+  // ── Toast helper ──
+  function toast(msg, type = 'info') {
+    const wrap = document.getElementById('mx-toast-wrap');
+    const el = document.createElement('div');
+    el.className = `mx-toast mx-toast-${type}`;
+    el.textContent = msg;
+    wrap.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+    setTimeout(() => {
+      el.classList.remove('show');
+      setTimeout(() => el.remove(), 300);
+    }, 4000);
+  }
+
+  // ── Event listeners ──
+  document.getElementById('startDateInput').addEventListener('change', updateDateHeaders);
+  document.getElementById('branchSelector').addEventListener('change', () => loadSavedSchedule());
+
+  // ── Init ──
+  updateDateHeaders();
+  {% if saved_matrix %}
+    populateMatrix({{ saved_matrix_json|safe }});
+  {% else %}
+    autoFillSchedule();
+  {% endif %}
+</script>
+{% endblock %}
