@@ -5,7 +5,8 @@ import {
 import { 
   Sliders, MessageSquare, MapPin, PlusCircle, CheckCircle2, 
   AlertCircle, Loader2, Save, ExternalLink, Navigation, 
-  Trash2, Edit3, HelpCircle, Phone, Mail, Globe, Check, X
+  Trash2, Edit3, HelpCircle, Phone, Mail, Globe, Check, X,
+  KeyRound, Eye, EyeOff
 } from 'lucide-react';
 
 export const AdminSiteSettingsPage: React.FC = () => {
@@ -26,7 +27,11 @@ export const AdminSiteSettingsPage: React.FC = () => {
     facebook_url: '',
     youtube_url: '',
     website_url: 'https://simsraipuredu.in',
+    admin_passcode: 'admin123',
+    educator_passcode: 'educator123',
   });
+  const [showAdminPasscode, setShowAdminPasscode] = useState(false);
+  const [showEducatorPasscode, setShowEducatorPasscode] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
 
@@ -435,6 +440,58 @@ export const AdminSiteSettingsPage: React.FC = () => {
                     placeholder="Hi SIMS Raipur, I would like to inquire about coaching..."
                     className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-[#D9A52E]"
                   />
+                </div>
+              </div>
+
+              <h3 className="font-serif font-bold text-base text-[#061426] pt-4 pb-2 border-b border-slate-100 flex items-center gap-2">
+                <KeyRound className="w-4 h-4 text-[#D9A52E]" />
+                Portal Security Passcodes
+              </h3>
+              <p className="text-slate-500 text-[11px] leading-relaxed">
+                Configure passcodes required to unlock the Admin Panel and Educator Workspace. When authorized staff or educators click their respective portal, they must enter this passcode to proceed.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Admin Panel Access Passcode</label>
+                  <div className="relative">
+                    <input
+                      type={showAdminPasscode ? 'text' : 'password'}
+                      value={settings.admin_passcode || ''}
+                      onChange={(e) => setSettings({ ...settings, admin_passcode: e.target.value })}
+                      placeholder="e.g. admin123"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-[#D9A52E] font-mono pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAdminPasscode(!showAdminPasscode)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {showAdminPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <span className="text-[10px] text-slate-400 mt-1 block">Passcode prompted when accessing Admin Panel</span>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Educator Workspace Passcode</label>
+                  <div className="relative">
+                    <input
+                      type={showEducatorPasscode ? 'text' : 'password'}
+                      value={settings.educator_passcode || ''}
+                      onChange={(e) => setSettings({ ...settings, educator_passcode: e.target.value })}
+                      placeholder="e.g. educator123"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-[#D9A52E] font-mono pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowEducatorPasscode(!showEducatorPasscode)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {showEducatorPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <span className="text-[10px] text-slate-400 mt-1 block">Passcode prompted when accessing Educator Workspace</span>
                 </div>
               </div>
 

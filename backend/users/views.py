@@ -1531,3 +1531,65 @@ class StudentPreferencesView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class VerifyPortalPasscodeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        portal = (request.data.get('portal') or '').strip().lower()
+        passcode = (request.data.get('passcode') or '').strip()
+
+        if not portal or not passcode:
+            return Response(
+                {'error': 'Portal and passcode are required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        role = getattr(request.user, 'profile', None) and request.user.profile.role or 'student'
+        is_admin_or_staff = request.user.is_staff or request.user.is_superuser or role in ['admin', 'superadmin']
+
+        # Block student role strictly
+        if role == 'student' and not is_admin_or_staff:
+            return Response(
+                {'error': 'Students are strictly forbidden from accessing administrative and educator portals.', 'code': 'forbidden_role'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        from site_config.models import SiteSettings
+        settings = SiteSettings.get_solo()
+
+        if portal == 'admin':
+            if not is_admin_or_staff:
+                return Response(
+                    {'error': 'You do not have administrative privileges.', 'code': 'forbidden'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            expected = settings.admin_passcode or 'admin123'
+            if passcode != expected:
+                return Response(
+                    {'error': 'Incorrect admin passcode. Access denied.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            return Response({'success': True, 'message': 'Admin passcode verified.'})
+
+        elif portal == 'educator':
+            is_educator = is_admin_or_staff or role == 'educator'
+            if not is_educator:
+                return Response(
+                    {'error': 'You do not have educator privileges.', 'code': 'forbidden'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            expected = settings.educator_passcode or 'educator123'
+            if passcode != expected:
+                return Response(
+                    {'error': 'Incorrect educator passcode. Access denied.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            return Response({'success': True, 'message': 'Educator passcode verified.'})
+
+        return Response(
+            {'error': 'Invalid portal specified.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+

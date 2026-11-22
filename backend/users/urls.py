@@ -16,7 +16,7 @@ from .views import (
     AdminDashboardStatsView, StudentProgressView, EducatorStudentProgressListView,
     AdminFacultyListView, AdminFacultyDetailView,
     AdminFacultyGrantEducatorView, AdminFacultyRevokeEducatorView,
-    EducatorProfileView, StudentPreferencesView
+    EducatorProfileView, StudentPreferencesView, VerifyPortalPasscodeView
 )
 
 urlpatterns = [
@@ -31,6 +31,7 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('google/', GoogleAuthView.as_view(), name='google-auth'),
     path('google/config/', GoogleAuthConfigView.as_view(), name='google-auth-config'),
+    path('verify-portal-passcode/', VerifyPortalPasscodeView.as_view(), name='verify-portal-passcode'),
     path('me/', MeView.as_view(), name='me'),
     path('profile/preferences/', StudentPreferencesView.as_view(), name='student-preferences'),
     

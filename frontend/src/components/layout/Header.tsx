@@ -516,7 +516,6 @@ export const Header: React.FC = () => {
           onSuccess={handlePasswordSuccess}
           title={pendingPortal === 'admin' ? 'Admin Panel Access' : 'Educator Workspace Access'}
           targetPortal={pendingPortal}
-          email={user?.email || ''}
         />
       )}
     </header>

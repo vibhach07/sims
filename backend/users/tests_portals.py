@@ -324,3 +324,45 @@ class GoogleAuthTests(APITestCase):
         res = self.client.post(url, {'credential': 'fake_google_jwt', 'portal': 'educator'})
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(res.data.get('code'), 'not_educator')
+
+
+class VerifyPasscodeTests(APITestCase):
+    def setUp(self):
+        from site_config.models import SiteSettings
+        self.settings = SiteSettings.get_solo()
+        self.settings.admin_passcode = 'test_admin_pass'
+        self.settings.educator_passcode = 'test_edu_pass'
+        self.settings.save()
+
+        self.admin = User.objects.create_user('adm_pc', 'adm_pc@sims.test', 'pass123', is_staff=True, is_superuser=True)
+        UserProfile.objects.create(user=self.admin, role='admin')
+
+        self.educator = User.objects.create_user('edu_pc', 'edu_pc@sims.test', 'pass123')
+        UserProfile.objects.create(user=self.educator, role='educator')
+
+        self.student = User.objects.create_user('stu_pc', 'stu_pc@sims.test', 'pass123')
+        UserProfile.objects.create(user=self.student, role='student')
+
+    def test_admin_passcode_success(self):
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.post('/api/auth/verify-portal-passcode/', {'portal': 'admin', 'passcode': 'test_admin_pass'})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertTrue(res.data.get('success'))
+
+    def test_admin_passcode_failure(self):
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.post('/api/auth/verify-portal-passcode/', {'portal': 'admin', 'passcode': 'wrong_pass'})
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_student_blocked_from_passcode(self):
+        self.client.force_authenticate(user=self.student)
+        res = self.client.post('/api/auth/verify-portal-passcode/', {'portal': 'admin', 'passcode': 'test_admin_pass'})
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res.data.get('code'), 'forbidden_role')
+
+    def test_educator_passcode_success(self):
+        self.client.force_authenticate(user=self.educator)
+        res = self.client.post('/api/auth/verify-portal-passcode/', {'portal': 'educator', 'passcode': 'test_edu_pass'})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertTrue(res.data.get('success'))
+

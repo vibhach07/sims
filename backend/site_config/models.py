@@ -36,6 +36,18 @@ class SiteSettings(models.Model):
     facebook_url = models.URLField(max_length=500, blank=True, default='', help_text='e.g. https://www.facebook.com/simsraipur')
     youtube_url = models.URLField(max_length=500, blank=True, default='', help_text='e.g. https://www.youtube.com/@simsraipur')
     website_url = models.URLField(max_length=500, blank=True, default='https://simsraipuredu.in')
+    admin_passcode = models.CharField(
+        max_length=100,
+        default='admin123',
+        blank=True,
+        help_text='Passcode required to unlock Admin Panel'
+    )
+    educator_passcode = models.CharField(
+        max_length=100,
+        default='educator123',
+        blank=True,
+        help_text='Passcode required to unlock Educator Workspace'
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

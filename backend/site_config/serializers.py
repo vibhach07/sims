@@ -24,6 +24,30 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
         read_only_fields = ['updated_at']
 
 
+class SiteSettingsAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SiteSettings
+        fields = [
+            'site_name',
+            'whatsapp_counsellor_number',
+            'whatsapp_group_url',
+            'whatsapp_counsellor_message',
+            'floating_whatsapp_enabled',
+            'floating_whatsapp_target',
+            'floating_whatsapp_message',
+            'support_phone',
+            'support_email',
+            'instagram_url',
+            'facebook_url',
+            'youtube_url',
+            'website_url',
+            'admin_passcode',
+            'educator_passcode',
+            'updated_at',
+        ]
+        read_only_fields = ['updated_at']
+
+
 class CentrePublicSerializer(serializers.ModelSerializer):
     map_link = serializers.CharField(read_only=True)
     directions_link = serializers.CharField(read_only=True)

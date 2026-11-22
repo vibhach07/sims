@@ -8,6 +8,7 @@ from users.permissions import IsAdminUser
 from .models import SiteSettings, Centre
 from .serializers import (
     SiteSettingsSerializer,
+    SiteSettingsAdminSerializer,
     CentrePublicSerializer,
     CentreAdminSerializer,
     PublicSiteConfigSerializer
@@ -46,11 +47,11 @@ class AdminSiteSettingsView(APIView):
 
     def get(self, request):
         settings = SiteSettings.get_solo()
-        return Response(SiteSettingsSerializer(settings).data)
+        return Response(SiteSettingsAdminSerializer(settings).data)
 
     def put(self, request):
         settings = SiteSettings.get_solo()
-        serializer = SiteSettingsSerializer(settings, data=request.data, partial=True)
+        serializer = SiteSettingsAdminSerializer(settings, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

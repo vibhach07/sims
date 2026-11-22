@@ -534,17 +534,11 @@ export const AuthAPI = {
       body: JSON.stringify({ email, password, portal }),
     }),
 
-  verifyPassword: async (email: string, password: string): Promise<boolean> => {
-    const res = await fetch(`${API_BASE}/api/auth/login/`, {
+  verifyPasscode: async (portal: 'admin' | 'educator', passcode: string): Promise<boolean> => {
+    return apiFetch<{ success: boolean; message: string }>('/api/auth/verify-portal-passcode/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data.error || data.detail || 'Incorrect password. Access denied.');
-    }
-    return true;
+      body: JSON.stringify({ portal, passcode }),
+    }).then(() => true);
   },
 
   googleConfig: () =>
@@ -1594,6 +1588,8 @@ export interface APISiteSettings {
   facebook_url: string;
   youtube_url: string;
   website_url: string;
+  admin_passcode?: string;
+  educator_passcode?: string;
   updated_at?: string;
 }
 
