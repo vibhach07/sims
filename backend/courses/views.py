@@ -103,8 +103,16 @@ class CourseListView(generics.ListAPIView):
 class CourseDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CourseDetailSerializer
-    lookup_field = 'slug'
     queryset = Course.objects.filter(is_published=True).prefetch_related('curriculum__lessons')
+
+    def get_object(self):
+        slug = str(self.kwargs.get('slug', ''))
+        if slug.isdigit():
+            obj = get_object_or_404(self.get_queryset(), id=int(slug))
+        else:
+            obj = get_object_or_404(self.get_queryset(), slug=slug)
+        self.check_object_permissions(self.request, obj)
+        return obj
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()

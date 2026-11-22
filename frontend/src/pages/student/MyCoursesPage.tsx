@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { CoursesAPI, APICourse, OrdersAPI, APIOrder } from '../../services/api';
-import { PlayCircle, Clock, BookOpen, Loader2, Receipt, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { PlayCircle, Clock, BookOpen, Loader2, Receipt, CheckCircle, AlertCircle, RefreshCw, ArrowRight } from 'lucide-react';
 
 export const MyCoursesPage: React.FC = () => {
   const { user } = useAuth();
@@ -15,16 +15,8 @@ export const MyCoursesPage: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     CoursesAPI.myCourses()
-      .then(data => {
-        if (data.length > 0) {
-          setCourses(data);
-        } else {
-          CoursesAPI.list().then(pub => setCourses(pub.slice(0, 3)));
-        }
-      })
-      .catch(() => {
-        CoursesAPI.list().then(pub => setCourses(pub.slice(0, 3)));
-      })
+      .then(data => setCourses(data || []))
+      .catch(() => setCourses([]))
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -86,6 +78,21 @@ export const MyCoursesPage: React.FC = () => {
             <Loader2 className="w-8 h-8 animate-spin text-[#D9A52E] mx-auto mb-3" />
             <p className="text-sm text-[#687386]">Loading enrolled courses...</p>
           </div>
+        ) : courses.length === 0 ? (
+          <div className="py-16 text-center max-w-md mx-auto p-6 bg-white rounded-2xl border border-[#E3D8BE]">
+            <BookOpen className="w-12 h-12 text-[#D9A52E] mx-auto mb-3 opacity-60" />
+            <h3 className="font-serif font-bold text-lg text-[#061426] mb-1">No Enrolled Courses Yet</h3>
+            <p className="text-xs text-[#687386] mb-5">
+              You are not currently enrolled in any courses. Browse our course catalog and start preparing with expert faculty.
+            </p>
+            <Link
+              to="/courses"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#061426] text-[#F0C45B] hover:text-white font-bold text-xs transition shadow-md"
+            >
+              <span>Explore Course Catalog</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {courses.map((course) => (
@@ -134,7 +141,7 @@ export const MyCoursesPage: React.FC = () => {
                   </Link>
 
                   <Link
-                    to={`/learn/${course.slug}/1`}
+                    to={`/learn/${course.slug}`}
                     className="btn-sims-primary px-4 py-2 text-xs font-bold flex items-center gap-1.5 shadow-sm"
                   >
                     <PlayCircle className="w-3.5 h-3.5" /> Open Classroom

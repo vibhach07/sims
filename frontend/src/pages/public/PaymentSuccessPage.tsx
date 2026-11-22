@@ -20,7 +20,7 @@ export const PaymentSuccessPage: React.FC = () => {
 
   const getDestinationLink = () => {
     if (!order) return '/student/my-courses';
-    if (order.item_type === 'course') return `/learn/${order.item_id}/1`;
+    if (order.item_type === 'course') return `/learn/${order.item_id}`;
     if (order.item_type === 'test') return `/student/tests/${order.item_id}`;
     return '/study-material';
   };

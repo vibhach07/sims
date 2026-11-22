@@ -180,11 +180,28 @@ export const LearningClassroomPage: React.FC = () => {
 
   if (!currentLesson) {
     return (
-      <div className="p-8 text-center min-h-screen bg-[#061426] text-white flex flex-col items-center justify-center">
-        <h2 className="text-xl font-bold font-serif">No Lectures Available</h2>
-        <Link to={`/courses/${course.slug}`} className="text-[#D9A52E] underline mt-3 inline-block text-sm">
-          Return to Course Details
-        </Link>
+      <div className="p-8 text-center min-h-screen bg-[#061426] text-white flex flex-col items-center justify-center max-w-lg mx-auto">
+        <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4 border border-emerald-500/30">
+          <CheckCircle2 className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-bold font-serif text-[#F0C45B] mb-2">Enrollment Active!</h2>
+        <p className="text-sm text-[#E3D8BE] mb-6 leading-relaxed">
+          You have full enrolled access to <strong className="text-white">{course.title}</strong>. Recorded lectures and live classes will be updated as the academic session proceeds.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+          <Link
+            to={`/courses/${course.slug}`}
+            className="w-full sm:flex-1 py-3 rounded-xl bg-[#D9A52E] text-[#061426] font-bold text-xs hover:bg-[#F0C45B] transition shadow-md"
+          >
+            View Full Syllabus
+          </Link>
+          <Link
+            to="/student/my-courses"
+            className="w-full sm:flex-1 py-3 rounded-xl border border-white/20 text-white font-semibold text-xs hover:bg-white/10 transition"
+          >
+            My Enrolled Courses
+          </Link>
+        </div>
       </div>
     );
   }

@@ -132,6 +132,7 @@ const App: React.FC = () => {
                   <Route path="/student/profile" element={<StudentProfilePage />} />
                   <Route path="/student/profile-setup" element={<StudentProfileSetupPage />} />
                 </Route>
+                <Route path="/learn/:courseSlug" element={<LearningClassroomPage />} />
                 <Route path="/learn/:courseSlug/:lessonId" element={<LearningClassroomPage />} />
               </Route>
 
