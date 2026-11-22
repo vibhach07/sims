@@ -154,12 +154,22 @@ export const Footer: React.FC = () => {
               <li><Link to="/faculty" className="hover:text-[#F0C45B] transition">Faculty Directory</Link></li>
               <li><Link to="/study-material" className="hover:text-[#F0C45B] transition">Free Study Resources</Link></li>
               <li><Link to="/student/dashboard" className="hover:text-[#F0C45B] transition">Student Learning Dashboard</Link></li>
-              {user?.role !== 'student' && (user?.role === 'educator' || user?.isStaff || user?.role === 'admin' || user?.role === 'superadmin') && (
-                <li><Link to="/educator/dashboard" className="hover:text-[#F0C45B] transition">Educator Workspace</Link></li>
-              )}
-              {user?.role !== 'student' && (user?.isStaff || user?.role === 'admin' || user?.role === 'superadmin') && (
-                <li><Link to="/admin/dashboard" className="hover:text-[#F0C45B] transition">Admin Portal</Link></li>
-              )}
+              {(() => {
+                const r = (user?.role || 'student').toLowerCase().trim();
+                const isStudent = r === 'student' && !user?.isStaff && !user?.isSuperuser;
+                const isAdmin = Boolean(user?.isStaff || user?.isSuperuser || r === 'admin' || r === 'superadmin');
+                const isEducator = Boolean(r === 'educator');
+                return (
+                  <>
+                    {!isStudent && (isEducator || isAdmin) && (
+                      <li><Link to="/educator/dashboard" className="hover:text-[#F0C45B] transition">Educator Workspace</Link></li>
+                    )}
+                    {!isStudent && isAdmin && (
+                      <li><Link to="/admin/dashboard" className="hover:text-[#F0C45B] transition">Admin Portal</Link></li>
+                    )}
+                  </>
+                );
+              })()}
               <li><Link to="/privacy-policy" className="hover:text-[#F0C45B] transition">Privacy Policy</Link></li>
               <li><Link to="/terms" className="hover:text-[#F0C45B] transition">Terms & Conditions</Link></li>
             </ul>

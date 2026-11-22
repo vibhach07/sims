@@ -39,8 +39,8 @@ export const RoleRoute: React.FC<RoleRouteProps> = ({ allowedRoles, children }) 
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
-  const role = (user.role || 'student').toLowerCase();
-  const isStaffOrAdmin = user.isStaff || user.isSuperuser || role === 'admin' || role === 'superadmin' || role === 'staff';
+  const role = (user.role || 'student').toLowerCase().trim();
+  const isStaffOrAdmin = Boolean(user.isStaff || user.isSuperuser || role === 'admin' || role === 'superadmin' || role === 'staff');
 
   // Check if role is allowed
   const hasAccess =

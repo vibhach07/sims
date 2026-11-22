@@ -127,30 +127,37 @@ export const TestTakingPage: React.FC = () => {
     return () => clearInterval(timer);
   }, [attempt, handleFinalSubmit]);
 
-  // Window visibility & integrity tracking
+  // Prevent back navigation & auto-submit on back attempt
   useEffect(() => {
-    if (!attempt || attempt.integrityMode === 'off') return;
+    if (!attempt) return;
 
-    const handleVisibilityChange = async () => {
-      if (document.hidden) {
-        hiddenStartRef.current = Date.now();
+    window.history.pushState(null, '', window.location.href);
+
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      window.history.pushState(null, '', window.location.href);
+
+      if (!autoSubmitTriggeredRef.current) {
+        autoSubmitTriggeredRef.current = true;
         AssessmentsAPI.integrity(attempt.id, 'hidden').catch(() => {});
-      } else {
-        const elapsed = hiddenStartRef.current ? (Date.now() - hiddenStartRef.current) / 1000 : 0;
-        hiddenStartRef.current = null;
+        handleFinalSubmit(false, true);
+      }
+    };
 
-        try {
-          const res = await AssessmentsAPI.integrity(attempt.id, 'visible');
-          if (res.autoSubmitted) {
-            handleFinalSubmit(false, true);
-          } else if (res.warning) {
-            setIntegrityWarning('Window switch detected! Please stay on this tab to avoid auto-submission.');
-          }
-        } catch (e) {
-          // Client-side fallback only on prolonged interruption (>15s) in strict mode
-          if (attempt.integrityMode === 'strict' && elapsed > 15.0) {
-            handleFinalSubmit(false, true);
-          }
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [attempt, handleFinalSubmit]);
+
+  // Window visibility & tab change auto-submit
+  useEffect(() => {
+    if (!attempt) return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (!autoSubmitTriggeredRef.current) {
+          autoSubmitTriggeredRef.current = true;
+          AssessmentsAPI.integrity(attempt.id, 'hidden').catch(() => {});
+          handleFinalSubmit(false, true);
         }
       }
     };
@@ -436,15 +443,25 @@ export const TestTakingPage: React.FC = () => {
 
               {/* Question Text with MathText */}
               <div className="space-y-4 bg-white p-6 rounded-2xl border border-[#E3D8BE] shadow-sm">
-                {currentQ.imageUrl && !(currentQ.questionEn || '').includes(currentQ.imageUrl) && (
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center max-h-72 overflow-hidden my-2">
-                    <img
-                      src={currentQ.imageUrl.startsWith('/') ? `${(import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '')}${currentQ.imageUrl}` : currentQ.imageUrl}
-                      alt="Question figure"
-                      className="max-h-64 object-contain rounded shadow-xs"
-                    />
-                  </div>
-                )}
+                {(() => {
+                  const combined = `${currentQ.questionEn || ''} ${currentQ.questionHi || ''} ${currentQ.question || ''}`;
+                  const hasEmbeddedImg = /!\[.*?\]\([^)]+\)|\[\[IMG:[^\]]+\]\]/i.test(combined);
+                  if (!currentQ.imageUrl || hasEmbeddedImg) return null;
+
+                  const imgSrc = currentQ.imageUrl.startsWith('/')
+                    ? `${(import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '')}${currentQ.imageUrl}`
+                    : currentQ.imageUrl;
+
+                  return (
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center max-h-72 overflow-hidden my-2">
+                      <img
+                        src={imgSrc}
+                        alt="Question figure"
+                        className="max-h-64 object-contain rounded shadow-xs"
+                      />
+                    </div>
+                  );
+                })()}
 
                 {(languageMode === 'en' || languageMode === 'both') && (
                   <div className="text-base sm:text-lg font-medium text-[#061426]">

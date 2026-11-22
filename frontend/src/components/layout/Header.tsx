@@ -16,8 +16,13 @@ export const Header: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const [pendingPortal, setPendingPortal] = useState<'admin' | 'educator' | null>(null);
 
+  const userRole = (user?.role || 'student').toLowerCase().trim();
+  const isStudent = userRole === 'student' && !user?.isStaff && !user?.isSuperuser;
+  const isAdmin = Boolean(user?.isStaff || user?.isSuperuser || userRole === 'admin' || userRole === 'superadmin');
+  const isEducator = Boolean(userRole === 'educator');
+
   const handlePortalClick = (portal: 'admin' | 'educator') => {
-    if (user?.role === 'student') return;
+    if (isStudent) return;
     setPendingPortal(portal);
   };
 
@@ -311,7 +316,7 @@ export const Header: React.FC = () => {
                         <span>My Purchases</span>
                       </Link>
 
-                      {user?.role !== 'student' && (user?.role === 'admin' || user?.role === 'superadmin' || user?.isSuperuser) && (
+                      {!isStudent && isAdmin && (
                         <button
                           type="button"
                           onClick={() => {
@@ -325,7 +330,7 @@ export const Header: React.FC = () => {
                         </button>
                       )}
 
-                      {user?.role !== 'student' && user?.role === 'educator' && (
+                      {!isStudent && isEducator && (
                         <button
                           type="button"
                           onClick={() => {

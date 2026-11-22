@@ -829,6 +829,9 @@ class DocumentQuestionParser:
                         if img['width'] >= 25 and img['height'] >= 25 and img['width'] < page.width * 0.95 and img['height'] < page.height * 0.95:
                             figure_boxes.append((img['x0'], img['top'], img['x1'], img['bottom']))
 
+                    # Sort figure boxes top-to-bottom so questions match figures in natural reading order
+                    figure_boxes.sort(key=lambda b: (b[1], b[0]))
+
                     for bbox in figure_boxes:
                         try:
                             crop_box = (
