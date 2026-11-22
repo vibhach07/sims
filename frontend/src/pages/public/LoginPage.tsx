@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Lock, Mail, ArrowRight, Loader2, GraduationCap, Briefcase, Eye, EyeOff } from 'lucide-react';
 import { GoogleLoginButton } from '../../components/auth/GoogleLoginButton';
@@ -13,6 +13,8 @@ export const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { login, loginWithGoogle, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = (location.state as any)?.returnTo || (location.state as any)?.from?.pathname;
 
   // Redirect if already logged in
   useEffect(() => {
@@ -22,10 +24,10 @@ export const LoginPage: React.FC = () => {
       } else if (user.role === 'educator') {
         navigate('/educator/dashboard');
       } else {
-        navigate('/student/dashboard');
+        navigate(returnTo || '/student/dashboard');
       }
     }
-  }, [user, navigate]);
+  }, [user, navigate, returnTo]);
 
   const handleGoogleSuccess = async (credential: string) => {
     setError('');
@@ -40,7 +42,7 @@ export const LoginPage: React.FC = () => {
         if (!loggedUser.targetExam || !loggedUser.phone) {
           navigate('/student/profile-setup');
         } else {
-          navigate('/student/dashboard');
+          navigate(returnTo || '/student/dashboard');
         }
       }
     } catch (err: any) {
@@ -69,7 +71,7 @@ export const LoginPage: React.FC = () => {
         if (!loggedUser.targetExam || !loggedUser.phone) {
           navigate('/student/profile-setup');
         } else {
-          navigate('/student/dashboard');
+          navigate(returnTo || '/student/dashboard');
         }
       }
     } catch (err: any) {

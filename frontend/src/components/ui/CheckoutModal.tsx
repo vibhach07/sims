@@ -139,18 +139,29 @@ export const CheckoutModal: React.FC = () => {
             </div>
 
             {/* CTA */}
-            <button
-              onClick={handleConfirm}
-              disabled={!isAuthenticated || isSubmitting}
-              className={`w-full py-3.5 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md ${
-                !isAuthenticated || isSubmitting
-                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  : 'bg-[#D9A52E] text-[#061426] hover:bg-[#F0C45B] active:scale-[0.98]'
-              }`}
-            >
-              <Lock className="w-4 h-4" />
-              <span>{isSubmitting ? 'Starting Razorpay Checkout…' : `Proceed to Pay ₹${item.price.toLocaleString('en-IN')}`}</span>
-            </button>
+            {!isAuthenticated ? (
+              <button
+                type="button"
+                onClick={() => {
+                  handleClose();
+                  navigate('/login', { state: { returnTo: window.location.pathname } });
+                }}
+                className="w-full py-3.5 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md bg-[#D9A52E] text-[#061426] hover:bg-[#F0C45B] active:scale-[0.98] cursor-pointer"
+              >
+                <Lock className="w-4 h-4" />
+                <span>Sign In to Complete Purchase (₹{item.price.toLocaleString('en-IN')})</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={isSubmitting}
+                className="w-full py-3.5 font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md bg-[#D9A52E] text-[#061426] hover:bg-[#F0C45B] active:scale-[0.98] cursor-pointer disabled:opacity-50"
+              >
+                <Lock className="w-4 h-4" />
+                <span>{isSubmitting ? 'Starting Razorpay Checkout…' : `Proceed to Pay ₹${item.price.toLocaleString('en-IN')}`}</span>
+              </button>
+            )}
 
             <p className="text-[10px] text-center text-[#A0A8B5]">
               <ShieldCheck className="w-3 h-3 inline mr-1 text-green-500" />

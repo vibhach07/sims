@@ -17,8 +17,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   onSelect 
 }) => {
   const navigate = useNavigate();
-  const { isCourseOwned, openCheckout } = usePurchase();
-  const { user } = useAuth();
+  const { isCourseOwned, openCheckout, startRazorpayPayment } = usePurchase();
+  const { user, isAuthenticated } = useAuth();
 
   // Owned = purchased via PurchaseContext OR enrolled via backend (enrolledCourseIds)
   const ownedLocally = isCourseOwned(String(course.id));
@@ -30,6 +30,32 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   const discount = originalPrice && price
     ? Math.round((1 - price / originalPrice) * 100) 
     : 0;
+
+  const handleBuyCourse = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      navigate('/login', { state: { returnTo: `/courses/${course.slug}` } });
+      return;
+    }
+    await startRazorpayPayment(
+      {
+        id: String(course.id),
+        type: 'course',
+        title: course.title,
+        subtitle: course.subtitle,
+        price: price || 0,
+        originalPrice,
+      },
+      {
+        onSuccess: (order) => {
+          navigate(`/payment/success?order_id=${order.order_id}`);
+        },
+        onError: (err) => {
+          alert(err || 'Could not complete Razorpay transaction.');
+        },
+      }
+    );
+  };
 
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('a, button')) return;
@@ -169,15 +195,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           </Link>
         ) : course.is_paid && price ? (
           <button
-            onClick={() => openCheckout({
-              id: String(course.id),
-              type: 'course',
-              title: course.title,
-              subtitle: course.subtitle,
-              price: price,
-              originalPrice,
-            })}
-            className="btn-sims-primary px-3.5 py-1.5 text-xs font-bold flex items-center gap-1.5 shadow-sm"
+            onClick={handleBuyCourse}
+            className="btn-sims-primary px-3.5 py-1.5 text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
           >
             <ShoppingCart className="w-3.5 h-3.5" />
             <span>Buy Course</span>

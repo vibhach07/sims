@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   Clock, BookOpen, Award, CheckCircle2, FileText, 
   HelpCircle, ChevronRight, Phone, PlayCircle,
@@ -17,9 +17,10 @@ import { Radio } from 'lucide-react';
 export const CourseDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { courses } = useCourses();
-  const { isCourseOwned, openCheckout } = usePurchase();
-  const { user } = useAuth();
+  const { isCourseOwned, openCheckout, startRazorpayPayment } = usePurchase();
+  const { user, isAuthenticated } = useAuth();
 
   const [course, setCourse] = useState<APICourseDetail | null>(null);
   const [hierarchy, setHierarchy] = useState<import('../../types').APICourseHierarchy | null>(null);
@@ -92,6 +93,32 @@ export const CourseDetailPage: React.FC = () => {
   const ownedLocally = isCourseOwned(String(course.id));
   const enrolledViaBackend = user?.enrolledCourseIds?.includes(course.id) ?? false;
   const owned = Boolean(user) && (ownedLocally || enrolledViaBackend || Boolean(course.is_enrolled));
+
+  const handleBuyNow = async () => {
+    if (!course) return;
+    if (!isAuthenticated) {
+      navigate('/login', { state: { returnTo: `/courses/${course.slug}` } });
+      return;
+    }
+    await startRazorpayPayment(
+      {
+        id: String(course.id),
+        type: 'course',
+        title: course.title,
+        subtitle: course.subtitle,
+        price: price || 0,
+        originalPrice,
+      },
+      {
+        onSuccess: (order) => {
+          navigate(`/payment/success?order_id=${order.order_id}`);
+        },
+        onError: (err) => {
+          alert(err || 'Could not complete Razorpay transaction.');
+        },
+      }
+    );
+  };
 
   // Filter faculty associated with this course or default all
   const assignedFaculty = facultyList.filter(f => (f.coursesTaught || []).includes(course.slug));
@@ -719,14 +746,7 @@ export const CourseDetailPage: React.FC = () => {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => openCheckout({
-                        id: String(course.id),
-                        type: 'course',
-                        title: course.title,
-                        subtitle: course.subtitle,
-                        price: price,
-                        originalPrice,
-                      })}
+                      onClick={handleBuyNow}
                       className="w-full py-3 rounded-xl bg-[#D9A52E] hover:bg-[#F0C45B] text-[#061426] font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <ShoppingCart className="w-4 h-4" />
@@ -814,14 +834,8 @@ export const CourseDetailPage: React.FC = () => {
             ) : (
               <button
                 type="button"
-                onClick={() => openCheckout({
-                  id: String(course.id),
-                  type: 'course',
-                  title: course.title,
-                  price: price,
-                  originalPrice,
-                })}
-                className="px-5 py-2.5 rounded-xl bg-[#D9A52E] text-[#061426] font-bold text-xs shadow-md"
+                onClick={handleBuyNow}
+                className="px-5 py-2.5 rounded-xl bg-[#D9A52E] text-[#061426] font-bold text-xs shadow-md cursor-pointer"
               >
                 Buy Now
               </button>
