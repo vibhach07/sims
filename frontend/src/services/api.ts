@@ -534,6 +534,19 @@ export const AuthAPI = {
       body: JSON.stringify({ email, password, portal }),
     }),
 
+  verifyPassword: async (email: string, password: string): Promise<boolean> => {
+    const res = await fetch(`${API_BASE}/api/auth/login/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || data.detail || 'Incorrect password. Access denied.');
+    }
+    return true;
+  },
+
   googleConfig: () =>
     apiFetch<{ client_id: string }>('/api/auth/google/config/'),
 

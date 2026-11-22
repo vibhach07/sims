@@ -5,10 +5,12 @@ import {
   Award, ExternalLink, Navigation, Instagram, Facebook, Youtube, MessageCircle 
 } from 'lucide-react';
 import { useSite } from '../../contexts/SiteContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { WhatsAppCounsellorButton } from '../WhatsAppCounsellorButton';
 
 export const Footer: React.FC = () => {
   const { settings, centres } = useSite();
+  const { user } = useAuth();
 
   return (
     <footer className="bg-[#061426] text-[#FFF9ED] border-t border-[#D9A52E]/30 pt-16 pb-8">
@@ -152,8 +154,12 @@ export const Footer: React.FC = () => {
               <li><Link to="/faculty" className="hover:text-[#F0C45B] transition">Faculty Directory</Link></li>
               <li><Link to="/study-material" className="hover:text-[#F0C45B] transition">Free Study Resources</Link></li>
               <li><Link to="/student/dashboard" className="hover:text-[#F0C45B] transition">Student Learning Dashboard</Link></li>
-              <li><Link to="/educator/dashboard" className="hover:text-[#F0C45B] transition">Educator Workspace</Link></li>
-              <li><Link to="/admin/dashboard" className="hover:text-[#F0C45B] transition">Admin Portal</Link></li>
+              {user?.role !== 'student' && (user?.role === 'educator' || user?.isStaff || user?.role === 'admin' || user?.role === 'superadmin') && (
+                <li><Link to="/educator/dashboard" className="hover:text-[#F0C45B] transition">Educator Workspace</Link></li>
+              )}
+              {user?.role !== 'student' && (user?.isStaff || user?.role === 'admin' || user?.role === 'superadmin') && (
+                <li><Link to="/admin/dashboard" className="hover:text-[#F0C45B] transition">Admin Portal</Link></li>
+              )}
               <li><Link to="/privacy-policy" className="hover:text-[#F0C45B] transition">Privacy Policy</Link></li>
               <li><Link to="/terms" className="hover:text-[#F0C45B] transition">Terms & Conditions</Link></li>
             </ul>

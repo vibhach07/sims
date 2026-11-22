@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, ChevronDown, Phone, User, ShoppingBag, Power } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { ThemeToggle } from '../common/ThemeToggle';
+import { PasswordConfirmModal } from '../auth/PasswordConfirmModal';
 
 export const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -11,7 +12,24 @@ export const Header: React.FC = () => {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
+  const [pendingPortal, setPendingPortal] = useState<'admin' | 'educator' | null>(null);
+
+  const handlePortalClick = (portal: 'admin' | 'educator') => {
+    if (user?.role === 'student') return;
+    setPendingPortal(portal);
+  };
+
+  const handlePasswordSuccess = () => {
+    const portal = pendingPortal;
+    setPendingPortal(null);
+    if (portal === 'admin') {
+      navigate('/admin/dashboard');
+    } else if (portal === 'educator') {
+      navigate('/educator/dashboard');
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -294,25 +312,31 @@ export const Header: React.FC = () => {
                       </Link>
 
                       {user?.role !== 'student' && (user?.role === 'admin' || user?.role === 'superadmin' || user?.isSuperuser) && (
-                        <Link
-                          to="/admin/dashboard"
-                          onClick={() => setProfileDropdownOpen(false)}
-                          className="flex items-center gap-3 px-3.5 py-2 rounded-xl text-[#A87519] dark:text-[#F0C45B] hover:bg-amber-50 dark:hover:bg-amber-950/30 font-medium text-xs sm:text-sm transition"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileDropdownOpen(false);
+                            handlePortalClick('admin');
+                          }}
+                          className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-[#A87519] dark:text-[#F0C45B] hover:bg-amber-50 dark:hover:bg-amber-950/30 font-medium text-xs sm:text-sm transition text-left cursor-pointer"
                         >
                           <span className="w-4 h-4 rounded-md bg-[#D9A52E]/20 text-[#A87519] dark:text-[#F0C45B] text-[10px] font-bold flex items-center justify-center shrink-0">A</span>
                           <span>Admin Panel</span>
-                        </Link>
+                        </button>
                       )}
 
                       {user?.role !== 'student' && user?.role === 'educator' && (
-                        <Link
-                          to="/educator/dashboard"
-                          onClick={() => setProfileDropdownOpen(false)}
-                          className="flex items-center gap-3 px-3.5 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 font-medium text-xs sm:text-sm transition"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileDropdownOpen(false);
+                            handlePortalClick('educator');
+                          }}
+                          className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 font-medium text-xs sm:text-sm transition text-left cursor-pointer"
                         >
                           <span className="w-4 h-4 rounded-md bg-white/10 text-slate-600 dark:text-slate-300 text-[10px] font-bold flex items-center justify-center shrink-0">E</span>
                           <span>Educator Workspace</span>
-                        </Link>
+                        </button>
                       )}
                     </div>
 
@@ -412,32 +436,41 @@ export const Header: React.FC = () => {
           <div className="pt-3 border-t border-white/10 flex flex-col gap-2">
             {isAuthenticated ? (
               <>
-                {(user?.isStaff || user?.role === 'admin' || user?.role === 'superadmin') && (
+                {user?.role !== 'student' && (user?.isStaff || user?.role === 'admin' || user?.role === 'superadmin') && (
                   <>
-                    <Link
-                      to="/admin/dashboard"
-                      onClick={() => setMobileMenuOpen(false)}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handlePortalClick('admin');
+                      }}
                       className="w-full text-center py-2.5 rounded-lg bg-[#102846] text-[#F0C45B] font-medium"
                     >
                       Admin Panel
-                    </Link>
-                    <Link
-                      to="/educator/dashboard"
-                      onClick={() => setMobileMenuOpen(false)}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handlePortalClick('educator');
+                      }}
                       className="w-full text-center py-2.5 rounded-lg bg-[#102846] text-[#E3D8BE] font-medium"
                     >
                       Educator Workspace
-                    </Link>
+                    </button>
                   </>
                 )}
-                {!user?.isStaff && user?.role === 'educator' && (
-                  <Link
-                    to="/educator/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
+                {user?.role !== 'student' && !user?.isStaff && user?.role === 'educator' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handlePortalClick('educator');
+                    }}
                     className="w-full text-center py-2.5 rounded-lg bg-[#102846] text-[#F0C45B] font-medium"
                   >
                     Educator Workspace
-                  </Link>
+                  </button>
                 )}
                 <Link
                   to="/student/profile"
@@ -475,6 +508,16 @@ export const Header: React.FC = () => {
             )}
           </div>
         </div>
+      )}
+      {pendingPortal && (
+        <PasswordConfirmModal
+          isOpen={pendingPortal !== null}
+          onClose={() => setPendingPortal(null)}
+          onSuccess={handlePasswordSuccess}
+          title={pendingPortal === 'admin' ? 'Admin Panel Access' : 'Educator Workspace Access'}
+          targetPortal={pendingPortal}
+          email={user?.email || ''}
+        />
       )}
     </header>
   );
